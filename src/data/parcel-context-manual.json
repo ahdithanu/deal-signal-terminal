@@ -1,0 +1,92 @@
+{
+  "083182007": {
+    "status": "partial",
+    "sourceLabel": "Manual parcel import v1",
+    "sourceAsOf": "2026-04-05",
+    "ownerName": "Air Park Self Storage LLC",
+    "ownershipEntityType": "entity",
+    "ownerMailingCity": "Cameron Park",
+    "zoning": "Commercial Regional",
+    "landUse": "Self-storage",
+    "lotSizeAcres": 4.7,
+    "lastTransferDate": "2021-10-14",
+    "transferContext": "Manual import suggests stabilized storage ownership with a now-disrupted operating asset.",
+    "assessedValue": 5980000,
+    "contextNotes": [
+      "Manual import should be replaced by live assessor or parcel-system data in production.",
+      "Transfer date and assessed value improve first-pass distress diligence, but still require source verification."
+    ]
+  },
+  "117490004": {
+    "status": "partial",
+    "sourceLabel": "Manual parcel import v1",
+    "sourceAsOf": "2026-04-05",
+    "ownerName": "Carson Crossing Holdings LLC",
+    "ownershipEntityType": "entity",
+    "ownerMailingCity": "El Dorado Hills",
+    "zoning": "Commercial Mixed Use",
+    "landUse": "Medical office / mixed-use pad",
+    "lotSizeAcres": 3.2,
+    "lastTransferDate": "2022-08-11",
+    "transferContext": "Manual import points to sponsor-controlled ownership aligned with phased development activity.",
+    "assessedValue": 4125000,
+    "contextNotes": [
+      "This record is suitable for parcel-level follow-up and ownership verification.",
+      "Use as a model for sponsor-controlled development pads in future enrichment."
+    ]
+  },
+  "124301027": {
+    "status": "partial",
+    "sourceLabel": "Manual parcel import v1",
+    "sourceAsOf": "2026-04-05",
+    "ownerName": "Green Valley Retail Partners LLC",
+    "ownershipEntityType": "entity",
+    "ownerMailingCity": "El Dorado Hills",
+    "zoning": "Commercial Community",
+    "landUse": "Neighborhood retail center",
+    "lotSizeAcres": 2.1,
+    "lastTransferDate": "2021-05-19",
+    "transferContext": "Manual import suggests incumbent retail-center ownership, making tenant-reset or repositioning monitoring more relevant than land assembly.",
+    "assessedValue": 3650000,
+    "contextNotes": [
+      "Manual import adds enough parcel context to sharpen landlord-focused diligence.",
+      "Verify title and current center ownership before outreach."
+    ]
+  },
+  "082552001": {
+    "status": "partial",
+    "sourceLabel": "Manual parcel import v1",
+    "sourceAsOf": "2026-04-05",
+    "ownerName": "Wilkinson Ridge Holdings LLC",
+    "ownershipEntityType": "entity",
+    "ownerMailingCity": "Cameron Park",
+    "zoning": "Residential Estate Hillside",
+    "landUse": "Hillside residential homesite",
+    "lotSizeAcres": 1.4,
+    "lastTransferDate": "2024-02-09",
+    "transferContext": "Manual import suggests recent entity-led site control consistent with a builder or spec-development setup rather than long-term owner occupancy.",
+    "assessedValue": 289000,
+    "contextNotes": [
+      "Recent transfer timing makes this more actionable as a site-motion signal than a routine owner-builder filing.",
+      "Confirm whether adjacent lots or related entities control nearby hillside inventory."
+    ]
+  },
+  "046440012": {
+    "status": "partial",
+    "sourceLabel": "Manual parcel import v1",
+    "sourceAsOf": "2026-04-05",
+    "ownerName": "La Mesa Land Holdings LLC",
+    "ownershipEntityType": "entity",
+    "ownerMailingCity": "Somerset",
+    "zoning": "Rural Residential",
+    "landUse": "Manufactured home site",
+    "lotSizeAcres": 1.9,
+    "lastTransferDate": "2023-11-03",
+    "transferContext": "Manual import suggests relatively recent low-basis control, which makes the demolition read more like a land reset than a legacy owner cleanup event.",
+    "assessedValue": 214000,
+    "contextNotes": [
+      "The parcel reads as a teardown-to-replacement candidate rather than stabilized housing.",
+      "Verify utility condition and whether replacement housing or resale is the more likely path."
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "083182007": {
+    "zoning": "Commercial Regional",
+    "landUse": "Self-storage",
+    "lotSizeAcres": 4.7,
+    "contextNotes": [
+      "County parcel extract confirms a commercial self-storage parcel footprint at this APN.",
+      "Ownership, assessed value, and transfer timing still need separate verification or manual enrichment."
+    ]
+  },
+  "117490004": {
+    "zoning": "Commercial Mixed Use",
+    "landUse": "Medical office / mixed-use pad",
+    "lotSizeAcres": 3.2,
+    "contextNotes": [
+      "County parcel extract supports a commercial mixed-use pad read for this APN.",
+      "Parcel facts strengthen the pre-construction interpretation, but sponsor control still comes from manual ownership research."
+    ]
+  },
+  "124301027": {
+    "zoning": "Commercial Community",
+    "landUse": "Neighborhood retail center",
+    "lotSizeAcres": 2.1,
+    "contextNotes": [
+      "County parcel extract supports a retail-center parcel rather than raw land or residential inventory.",
+      "Leasing or repositioning implications still depend on follow-on permits and current tenancy."
+    ]
+  },
+  "082552001": {
+    "zoning": "Residential Estate Hillside",
+    "landUse": "Hillside residential homesite",
+    "lotSizeAcres": 1.4,
+    "contextNotes": [
+      "County parcel extract confirms a hillside homesite rather than an existing stabilized commercial parcel.",
+      "Adjacent lot control and builder affiliation remain open diligence questions."
+    ]
+  },
+  "046440012": {
+    "zoning": "Rural Residential",
+    "landUse": "Manufactured home site",
+    "lotSizeAcres": 1.9,
+    "contextNotes": [
+      "County parcel extract supports a rural residential site reset interpretation for this APN.",
+      "Replacement product, utility condition, and disposition intent still need manual follow-up."
+    ]
+  }
+}

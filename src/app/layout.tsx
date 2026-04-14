@@ -1,0 +1,53 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import { Providers } from "@/components/providers";
+
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Deal Signal Terminal",
+  description:
+    "A real estate intelligence app that ranks public permit signals into decision-ready opportunities.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          <div className="shell">
+            <header className="site-header">
+              <div className="header-inner">
+                <div className="brand-block">
+                  <p className="brand-mark">Deal Signal Terminal</p>
+                  <Link className="brand-title" href="/">
+                    Find what changed before everyone else does.
+                  </Link>
+                </div>
+
+                <div className="nav-block">
+                  <div className="status-pill">Launch market: El Dorado County West Slope</div>
+                  <nav className="nav-links">
+                    <Link className="nav-link" href="/">
+                      Home feed
+                    </Link>
+                    <Link className="nav-link" href="/watchlist">
+                      Watchlist
+                    </Link>
+                  </nav>
+                </div>
+              </div>
+            </header>
+
+            <main className="page">{children}</main>
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
+}

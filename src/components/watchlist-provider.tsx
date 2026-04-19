@@ -6,21 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import type { ConfidenceLevel, DevelopmentStage } from "@/types/domain";
-
-const STORAGE_KEY = "deal-signal-terminal.watchlist";
-
-type WatchlistEntry = {
-  savedAt: string;
-  snapshot?: WatchlistSnapshot;
-};
-
-export type WatchlistSnapshot = {
-  priorityScore: number;
-  confidenceLevel: ConfidenceLevel;
-  developmentStage: DevelopmentStage;
-  latestTimelineDate: string | null;
-};
+import type { WatchlistEntry, WatchlistSnapshot } from "@/types/domain";
 
 type WatchlistContextValue = {
   isReady: boolean;
@@ -33,53 +19,63 @@ type WatchlistContextValue = {
 
 const WatchlistContext = createContext<WatchlistContextValue | null>(null);
 
-function parseWatchlistEntries(value: string | null): Record<string, WatchlistEntry> {
-  if (!value) {
+function isWatchlistSnapshot(value: unknown): value is WatchlistSnapshot {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const snapshot = value as Partial<WatchlistSnapshot>;
+  return (
+    typeof snapshot.priorityScore === "number" &&
+    (snapshot.confidenceLevel === "high" ||
+      snapshot.confidenceLevel === "medium" ||
+      snapshot.confidenceLevel === "low") &&
+    (snapshot.developmentStage === "early_signal" ||
+      snapshot.developmentStage === "pre_construction" ||
+      snapshot.developmentStage === "active_construction" ||
+      snapshot.developmentStage === "disruption") &&
+    (snapshot.latestTimelineDate === null || typeof snapshot.latestTimelineDate === "string")
+  );
+}
+
+function parseWatchlistEntries(value: unknown): Record<string, WatchlistEntry> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
   }
 
-  try {
-    const parsed = JSON.parse(value);
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([key, entryValue]) => {
+      if (!entryValue || typeof entryValue !== "object") {
+        return [];
+      }
 
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
-    }
+      const entry = entryValue as Partial<WatchlistEntry>;
 
-    return Object.fromEntries(
-      Object.entries(parsed).flatMap(([key, entryValue]) => {
-        if (!entryValue || typeof entryValue !== "object") {
-          return [];
-        }
+      if (typeof entry.savedAt !== "string") {
+        return [];
+      }
 
-        const entry = entryValue as Partial<WatchlistEntry>;
+      if (entry.snapshot && !isWatchlistSnapshot(entry.snapshot)) {
+        return [];
+      }
 
-        if (typeof entry.savedAt !== "string") {
-          return [];
-        }
+      return [[key, { savedAt: entry.savedAt, snapshot: entry.snapshot }]];
+    })
+  );
+}
 
-        const snapshot = entry.snapshot;
-        if (
-          snapshot &&
-          (typeof snapshot.priorityScore !== "number" ||
-            (snapshot.confidenceLevel !== "high" &&
-              snapshot.confidenceLevel !== "medium" &&
-              snapshot.confidenceLevel !== "low") ||
-            (snapshot.developmentStage !== "early_signal" &&
-              snapshot.developmentStage !== "pre_construction" &&
-              snapshot.developmentStage !== "active_construction" &&
-              snapshot.developmentStage !== "disruption") ||
-            (snapshot.latestTimelineDate !== null &&
-              typeof snapshot.latestTimelineDate !== "string"))
-        ) {
-          return [];
-        }
+async function loadWatchlistEntries(): Promise<Record<string, WatchlistEntry>> {
+  const response = await fetch("/api/user-state", {
+    method: "GET",
+    cache: "no-store",
+  });
 
-        return [[key, { savedAt: entry.savedAt, snapshot } as WatchlistEntry]];
-      })
-    );
-  } catch {
-    return {};
+  if (!response.ok) {
+    throw new Error("Failed to load watchlist.");
   }
+
+  const state = (await response.json()) as { watchlist?: unknown };
+  return parseWatchlistEntries(state.watchlist);
 }
 
 export function WatchlistProvider({ children }: { children: React.ReactNode }) {
@@ -87,48 +83,76 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    try {
-      setWatchlistEntries(parseWatchlistEntries(window.localStorage.getItem(STORAGE_KEY)));
-    } finally {
-      setIsReady(true);
-    }
-  }, []);
+    let isActive = true;
 
-  useEffect(() => {
-    function handleStorage(event: StorageEvent) {
-      if (event.key === STORAGE_KEY) {
-        setWatchlistEntries(parseWatchlistEntries(event.newValue));
-      }
-    }
-
-    window.addEventListener("storage", handleStorage);
+    loadWatchlistEntries()
+      .then((entries) => {
+        if (isActive) {
+          setWatchlistEntries(entries);
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setWatchlistEntries({});
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsReady(true);
+        }
+      });
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
+      isActive = false;
     };
   }, []);
 
-  function toggle(opportunityId: string, snapshot?: WatchlistSnapshot) {
-    setWatchlistEntries((current) => {
-      const next = { ...current };
+  async function toggle(opportunityId: string, snapshot?: WatchlistSnapshot) {
+    const currentEntry = watchlistEntries[opportunityId];
+    const previousEntries = watchlistEntries;
 
-      if (next[opportunityId]) {
-        delete next[opportunityId];
-      } else {
-        next[opportunityId] = {
-          savedAt: new Date().toISOString(),
-          snapshot,
-        };
+    const optimisticEntries = { ...watchlistEntries };
+
+    if (currentEntry) {
+      delete optimisticEntries[opportunityId];
+    } else {
+      optimisticEntries[opportunityId] = {
+        savedAt: new Date().toISOString(),
+        snapshot,
+      };
+    }
+
+    setWatchlistEntries(optimisticEntries);
+
+    try {
+      const response = await fetch(
+        currentEntry
+          ? `/api/watchlist?opportunityId=${encodeURIComponent(opportunityId)}`
+          : "/api/watchlist",
+        {
+          method: currentEntry ? "DELETE" : "POST",
+          headers: currentEntry
+            ? undefined
+            : {
+                "Content-Type": "application/json",
+              },
+          body: currentEntry
+            ? undefined
+            : JSON.stringify({
+                opportunityId,
+                snapshot,
+              }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to save watchlist.");
       }
 
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // Keep the optimistic UI update even if persistence is unavailable.
-      }
-
-      return next;
-    });
+      setWatchlistEntries(parseWatchlistEntries(await response.json()));
+    } catch {
+      setWatchlistEntries(previousEntries);
+    }
   }
 
   const value = {

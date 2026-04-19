@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 
+import { getOpenAIConfig } from "@/lib/env";
+import { logError } from "@/lib/observability";
 import {
   formatConfidenceLevel,
   formatCurrency,
@@ -185,12 +187,13 @@ export async function generateOpportunityMemo(
 ): Promise<OpportunityMemo> {
   const summary = buildOpportunitySummary(opportunity);
   const generatedAt = new Date().toISOString();
+  const openAI = getOpenAIConfig();
 
-  if (process.env.OPENAI_API_KEY) {
+  if (openAI.apiKey) {
     try {
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const client = new OpenAI({ apiKey: openAI.apiKey });
       const response = await client.responses.create({
-        model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        model: openAI.model,
         input: [
           {
             role: "system",
@@ -215,6 +218,7 @@ export async function generateOpportunityMemo(
         };
       }
     } catch {
+      logError("OpenAI memo generation failed; falling back to deterministic memo.");
       // Fall back to deterministic memo if live generation is unavailable.
     }
   }

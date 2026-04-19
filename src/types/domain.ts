@@ -159,6 +159,28 @@ export type PermitTimelineEntry = {
   status: string;
 };
 
+export type WatchlistSnapshot = {
+  priorityScore: number;
+  confidenceLevel: ConfidenceLevel;
+  developmentStage: DevelopmentStage;
+  latestTimelineDate: string | null;
+};
+
+export type WatchlistEntry = {
+  savedAt: string;
+  snapshot?: WatchlistSnapshot;
+};
+
+export type NoteRecord = {
+  body: string;
+  savedAt: string;
+};
+
+export type UserState = {
+  watchlist: Record<string, WatchlistEntry>;
+  notes: Record<string, NoteRecord>;
+};
+
 export type Opportunity = {
   id: string;
   slug: string;

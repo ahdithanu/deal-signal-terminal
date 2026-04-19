@@ -12,9 +12,8 @@ import {
   formatProjectScale,
   formatSignalType,
 } from "@/lib/formatters";
-import type { Opportunity } from "@/types/domain";
+import type { Opportunity, WatchlistSnapshot } from "@/types/domain";
 import { WatchlistToggle } from "@/components/watchlist-toggle";
-import type { WatchlistSnapshot } from "@/components/watchlist-provider";
 
 export function SignalCard({
   opportunity,

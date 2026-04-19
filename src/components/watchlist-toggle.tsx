@@ -1,6 +1,7 @@
 "use client";
 
-import { useWatchlist, type WatchlistSnapshot } from "@/components/watchlist-provider";
+import { useWatchlist } from "@/components/watchlist-provider";
+import type { WatchlistSnapshot } from "@/types/domain";
 
 export function WatchlistToggle({
   opportunityId,

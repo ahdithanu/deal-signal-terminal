@@ -9,6 +9,7 @@ const market = getMarketById("ca-eldorado-west-slope");
 
 export default async function HomePage() {
   const session = await getAuthSession();
+  const featuredOpportunity = homeFeed[0];
 
   if (!session) {
     redirect("/login");
@@ -99,6 +100,28 @@ export default async function HomePage() {
         </div>
 
         <div className="sidebar-stack">
+          {featuredOpportunity ? (
+            <div className="panel demo-path-panel">
+              <p className="eyebrow">Suggested demo path</p>
+              <h3 className="section-title">Walk the strongest signal first</h3>
+              <p className="tight-copy">
+                Start with the highest-ranked lead, then open the memo and watchlist so the full
+                workflow lands in under two minutes.
+              </p>
+              <div className="button-stack demo-path-actions">
+                <a className="button" href={`/opportunity/${featuredOpportunity.slug}`}>
+                  Open top opportunity
+                </a>
+                <a className="button button-secondary" href={`/memo/${featuredOpportunity.slug}`}>
+                  Open IC memo
+                </a>
+                <a className="button button-secondary" href="/watchlist">
+                  Review watchlist changes
+                </a>
+              </div>
+            </div>
+          ) : null}
+
           <div className="panel">
             <p className="eyebrow">Current queue</p>
             <h3 className="section-title">What made the cut</h3>

@@ -3,15 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function LoginForm() {
+type LoginFormProps = {
+  demoCredentials: {
+    email: string;
+    password: string;
+    orgName: string;
+  } | null;
+};
+
+export function LoginForm({ demoCredentials }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitLogin(nextEmail: string, nextPassword: string, redirectToDemo = false) {
     setIsSubmitting(true);
     setError(null);
 
@@ -21,7 +28,7 @@ export function LoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: nextEmail, password: nextPassword }),
       });
 
       const payload = (await response.json()) as { error?: string };
@@ -30,7 +37,7 @@ export function LoginForm() {
         throw new Error(payload.error ?? "Login failed.");
       }
 
-      router.push("/");
+      router.push(redirectToDemo ? "/?demo=1" : "/");
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Login failed.");
@@ -39,8 +46,29 @@ export function LoginForm() {
     }
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitLogin(email, password);
+  }
+
+  async function handleDemoLogin() {
+    if (!demoCredentials) {
+      return;
+    }
+
+    setEmail(demoCredentials.email);
+    setPassword(demoCredentials.password);
+    await submitLogin(demoCredentials.email, demoCredentials.password, true);
+  }
+
   return (
     <form className="login-form" onSubmit={handleSubmit}>
+      {demoCredentials ? (
+        <button className="button demo-button" disabled={isSubmitting} onClick={handleDemoLogin} type="button">
+          {isSubmitting ? "Opening demo workspace..." : "Use demo workspace"}
+        </button>
+      ) : null}
+
       <label className="field">
         <span className="field-label">Email</span>
         <input
@@ -67,7 +95,7 @@ export function LoginForm() {
 
       {error ? <p className="form-error">{error}</p> : null}
 
-      <button className="button" disabled={isSubmitting} type="submit">
+      <button className="button button-secondary" disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
     </form>

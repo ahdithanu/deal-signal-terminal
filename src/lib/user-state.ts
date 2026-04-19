@@ -90,12 +90,9 @@ function sanitizeUserState(value: unknown): UserState {
   };
 }
 
-export async function getUserState(stateKey: string): Promise<UserState> {
-  const db = getDatabase();
-  const row = db
-    .prepare("SELECT watchlist_json, notes_json FROM user_states WHERE state_key = ?")
-    .get(stateKey) as { watchlist_json: string; notes_json: string } | undefined;
-
+function rowToUserState(
+  row: { watchlist_json: string; notes_json: string } | undefined
+): UserState {
   if (!row) {
     return emptyUserState();
   }
@@ -106,25 +103,45 @@ export async function getUserState(stateKey: string): Promise<UserState> {
   });
 }
 
+export async function getUserState(stateKey: string): Promise<UserState> {
+  const db = getDatabase();
+  const row = db
+    .prepare("SELECT watchlist_json, notes_json FROM user_states WHERE state_key = ?")
+    .get(stateKey) as { watchlist_json: string; notes_json: string } | undefined;
+
+  return rowToUserState(row);
+}
+
 export async function updateUserState(
   stateKey: string,
   updater: (state: UserState) => UserState
 ): Promise<UserState> {
   const db = getDatabase();
-  const current = await getUserState(stateKey);
-  const next = sanitizeUserState(updater(current));
-  const now = new Date().toISOString();
+  db.exec("BEGIN IMMEDIATE");
 
-  db.prepare(
-    `INSERT INTO user_states (state_key, watchlist_json, notes_json, updated_at)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(state_key) DO UPDATE SET
-       watchlist_json = excluded.watchlist_json,
-       notes_json = excluded.notes_json,
-       updated_at = excluded.updated_at`
-  ).run(stateKey, JSON.stringify(next.watchlist), JSON.stringify(next.notes), now);
+  try {
+    const row = db
+      .prepare("SELECT watchlist_json, notes_json FROM user_states WHERE state_key = ?")
+      .get(stateKey) as { watchlist_json: string; notes_json: string } | undefined;
+    const current = rowToUserState(row);
+    const next = sanitizeUserState(updater(current));
+    const now = new Date().toISOString();
 
-  return next;
+    db.prepare(
+      `INSERT INTO user_states (state_key, watchlist_json, notes_json, updated_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(state_key) DO UPDATE SET
+         watchlist_json = excluded.watchlist_json,
+         notes_json = excluded.notes_json,
+         updated_at = excluded.updated_at`
+    ).run(stateKey, JSON.stringify(next.watchlist), JSON.stringify(next.notes), now);
+
+    db.exec("COMMIT");
+    return next;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export const __testing = {

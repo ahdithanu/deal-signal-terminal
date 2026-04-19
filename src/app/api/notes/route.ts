@@ -47,16 +47,18 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid note body." }, { status: 400 });
   }
 
-  const trimmedBody = payload.body.trim();
+  const opportunityId = payload.opportunityId;
+  const body = payload.body;
+  const trimmedBody = body.trim();
 
   const state = await updateUserState(userStateKeyForSession(session), (current) => {
     const notes = { ...current.notes };
 
     if (trimmedBody.length === 0) {
-      delete notes[payload.opportunityId as string];
+      delete notes[opportunityId];
     } else {
-      notes[payload.opportunityId as string] = {
-        body: payload.body,
+      notes[opportunityId] = {
+        body,
         savedAt: new Date().toISOString(),
       };
     }
@@ -72,11 +74,11 @@ export async function PUT(request: Request) {
     userId: session.userId,
     action: trimmedBody.length === 0 ? "note_delete" : "note_upsert",
     resourceType: "opportunity_note",
-    resourceId: payload.opportunityId as string,
+    resourceId: opportunityId,
     metadata: {
       length: trimmedBody.length,
     },
   });
 
-  return NextResponse.json(state.notes[payload.opportunityId as string] ?? null);
+  return NextResponse.json(state.notes[opportunityId] ?? null);
 }

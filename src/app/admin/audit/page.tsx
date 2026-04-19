@@ -15,7 +15,10 @@ export default async function AuditAdminPage() {
     redirect("/");
   }
 
-  const events = listRecentAuditEvents(100).map((event) => ({
+  const events = listRecentAuditEvents({
+    limit: 100,
+    orgId: session.orgId,
+  }).map((event) => ({
     id: event.id,
     occurredAt: event.occurred_at,
     orgId: event.org_id,

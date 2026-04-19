@@ -1,16 +1,7 @@
-import { redirect } from "next/navigation";
-
 import { WatchlistPageClient } from "@/components/watchlist-page-client";
-import { getAuthSession } from "@/lib/auth";
 import { opportunities } from "@/lib/opportunities";
 
-export default async function WatchlistPage() {
-  const session = await getAuthSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
+export default function WatchlistPage() {
   return (
     <div className="page-stack">
       <section className="panel">
@@ -18,7 +9,7 @@ export default async function WatchlistPage() {
         <h1 className="detail-title">Watchlist</h1>
         <p className="tight-copy">
           Keep a lightweight acquisition shortlist without turning v1 into a CRM. Saved entries
-          are now private to your authenticated workspace session instead of browser-local only.
+          stay local to this browser session.
         </p>
       </section>
 

@@ -15,4 +15,3 @@ pnpm-debug.log*
 tsconfig.tsbuildinfo
 *.tsbuildinfo
 .codex-snapshots/
-.data/

@@ -40,6 +40,12 @@ export type AuthSession = {
   expiresAt: string;
 };
 
+export type DemoWorkspaceCredentials = {
+  email: string;
+  password: string;
+  orgName: string;
+};
+
 function getBootstrapConfig() {
   const isProduction = process.env.NODE_ENV === "production";
   const email =
@@ -58,6 +64,24 @@ function getBootstrapConfig() {
     password,
     orgName,
     orgSlug,
+  };
+}
+
+function shouldExposeDemoCredentials() {
+  return process.env.DST_EXPOSE_DEMO_CREDENTIALS === "true" || process.env.NODE_ENV !== "production";
+}
+
+export function getDemoWorkspaceCredentials(): DemoWorkspaceCredentials | null {
+  const bootstrap = getBootstrapConfig();
+
+  if (!shouldExposeDemoCredentials() || !bootstrap.email || !bootstrap.password) {
+    return null;
+  }
+
+  return {
+    email: bootstrap.email,
+    password: bootstrap.password,
+    orgName: bootstrap.orgName,
   };
 }
 

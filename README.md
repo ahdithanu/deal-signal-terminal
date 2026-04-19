@@ -43,6 +43,7 @@ Copy `.env.example` to `.env.local` if you want live OpenAI memo generation.
 - `DST_BOOTSTRAP_PASSWORD`: bootstrap password for the local auth store
 - `DST_BOOTSTRAP_ORG_NAME`: organization name shown in the app shell
 - `DST_BOOTSTRAP_ORG_SLUG`: organization slug used in the auth store
+- `DST_EXPOSE_DEMO_CREDENTIALS`: set to `true` if you want the login screen to show the seeded demo workspace and one-click demo entry in production
 
 ## Deployment
 

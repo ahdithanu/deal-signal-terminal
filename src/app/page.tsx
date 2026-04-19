@@ -7,9 +7,15 @@ import { homeFeedOpportunities, opportunities, getMarketById } from "@/lib/oppor
 const homeFeed = homeFeedOpportunities.slice(0, 10);
 const market = getMarketById("ca-eldorado-west-slope");
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ demo?: string }>;
+}) {
   const session = await getAuthSession();
   const featuredOpportunity = homeFeed[0];
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const isDemoRun = resolvedSearchParams?.demo === "1";
 
   if (!session) {
     redirect("/login");
@@ -41,6 +47,16 @@ export default async function HomePage() {
               Open watchlist
             </a>
           </div>
+
+          {isDemoRun ? (
+            <div className="hero-callout demo-run-callout">
+              <strong>Demo run active</strong>
+              <span>
+                You&apos;re inside the seeded workspace. Use the guided path below to move from the
+                top signal to memo output and watchlist changes in under two minutes.
+              </span>
+            </div>
+          ) : null}
 
           <div className="hero-stat-strip">
             <div className="hero-stat">
@@ -109,13 +125,13 @@ export default async function HomePage() {
                 workflow lands in under two minutes.
               </p>
               <div className="button-stack demo-path-actions">
-                <a className="button" href={`/opportunity/${featuredOpportunity.slug}`}>
+                <a className="button" href={`/opportunity/${featuredOpportunity.slug}${isDemoRun ? "?demo=1" : ""}`}>
                   Open top opportunity
                 </a>
-                <a className="button button-secondary" href={`/memo/${featuredOpportunity.slug}`}>
+                <a className="button button-secondary" href={`/memo/${featuredOpportunity.slug}${isDemoRun ? "?demo=1" : ""}`}>
                   Open IC memo
                 </a>
-                <a className="button button-secondary" href="/watchlist">
+                <a className="button button-secondary" href={`/watchlist${isDemoRun ? "?demo=1" : ""}`}>
                   Review watchlist changes
                 </a>
               </div>

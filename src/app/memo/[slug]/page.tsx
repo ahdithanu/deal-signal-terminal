@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 
 import { MemoCopyButton } from "@/components/memo-copy-button";
 import { MemoPrintButton } from "@/components/memo-print-button";
@@ -11,10 +12,14 @@ export const dynamic = "force-dynamic";
 
 export default async function MemoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ demo?: string }>;
 }) {
   const session = await getAuthSession();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const isDemoRun = resolvedSearchParams?.demo === "1";
 
   if (!session) {
     redirect("/login");
@@ -39,10 +44,24 @@ export default async function MemoPage({
               {formatOpportunityType(opportunity.opportunityType)} lead in {opportunity.locationLabel}
             </p>
             <p className="memo-header-summary">{memo.summary}</p>
+            {isDemoRun ? (
+              <div className="hero-callout demo-run-callout">
+                <strong>Demo step 3</strong>
+                <span>
+                  This is the fastest way to show how the terminal turns raw permit motion into a
+                  decision-ready investment brief.
+                </span>
+              </div>
+            ) : null}
           </div>
           <div className="button-stack">
             <MemoCopyButton memo={memo.body} />
             <MemoPrintButton />
+            {isDemoRun ? (
+              <Link className="button button-secondary" href="/watchlist?demo=1">
+                Open watchlist
+              </Link>
+            ) : null}
           </div>
         </div>
 

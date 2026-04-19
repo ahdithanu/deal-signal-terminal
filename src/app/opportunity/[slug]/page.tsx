@@ -25,10 +25,14 @@ import { getOpportunityBySlug } from "@/lib/opportunities";
 
 export default async function OpportunityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ demo?: string }>;
 }) {
   const session = await getAuthSession();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const isDemoRun = resolvedSearchParams?.demo === "1";
 
   if (!session) {
     redirect("/login");
@@ -65,6 +69,15 @@ export default async function OpportunityDetailPage({
             ) : null}
             <p className="signal-location">{opportunity.locationLabel}</p>
             <p className="detail-hero-summary">{summary}</p>
+            {isDemoRun ? (
+              <div className="hero-callout demo-run-callout">
+                <strong>Demo step 2</strong>
+                <span>
+                  This is the core diligence read. Use the memo next to show how the signal turns
+                  into a boardroom-ready write-up.
+                </span>
+              </div>
+            ) : null}
           </div>
 
           <div className="detail-actions">
@@ -84,7 +97,7 @@ export default async function OpportunityDetailPage({
               savedLabel="Saved"
               unsavedLabel="Add to watchlist"
             />
-            <Link className="button" href={`/memo/${opportunity.slug}`}>
+            <Link className="button" href={`/memo/${opportunity.slug}${isDemoRun ? "?demo=1" : ""}`}>
               Open memo draft
             </Link>
           </div>

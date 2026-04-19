@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Start application
+        env:
+          DST_BOOTSTRAP_EMAIL: admin@dealsignal.local
+          DST_BOOTSTRAP_PASSWORD: change-me-now
+        run: |
+          npm run start > /tmp/deal-signal-terminal.log 2>&1 &
+
+      - name: Wait for health endpoint
+        run: |
+          for attempt in {1..30}; do
+            if curl --silent --fail http://127.0.0.1:3000/api/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Application failed to become healthy"
+          cat /tmp/deal-signal-terminal.log
+          exit 1
+
+      - name: Smoke test authenticated routes
+        env:
+          SMOKE_BASE_URL: http://127.0.0.1:3000
+          SMOKE_EMAIL: admin@dealsignal.local
+          SMOKE_PASSWORD: change-me-now
+        run: npm run smoke

@@ -1,8 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { MemoCopyButton } from "@/components/memo-copy-button";
 import { MemoPrintButton } from "@/components/memo-print-button";
 import { generateOpportunityMemo } from "@/lib/ai";
+import { getAuthSession } from "@/lib/auth";
 import { formatConfidenceLevel, formatDate, formatOpportunityType } from "@/lib/formatters";
 import { getOpportunityBySlug } from "@/lib/opportunities";
 
@@ -13,6 +14,12 @@ export default async function MemoPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const session = await getAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
   const { slug } = await params;
   const opportunity = getOpportunityBySlug(slug);
 

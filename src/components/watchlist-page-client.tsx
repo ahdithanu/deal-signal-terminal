@@ -29,8 +29,8 @@ export function WatchlistPageClient({
         <p className="eyebrow">Watchlist</p>
         <h2 className="section-title">No saved opportunities yet</h2>
         <p>
-          Save signals from the home feed or a detail page. Watchlist entries stay in this browser
-          so you can keep a lightweight acquisition queue without standing up auth or a CRM.
+          Save signals from the home feed or a detail page. Watchlist entries now persist on the
+          server for this session so the queue survives browser resets and local storage drift.
         </p>
       </div>
     );

@@ -1,10 +1,19 @@
+import { redirect } from "next/navigation";
+
 import { SignalCard } from "@/components/signal-card";
+import { getAuthSession } from "@/lib/auth";
 import { homeFeedOpportunities, opportunities, getMarketById } from "@/lib/opportunities";
 
 const homeFeed = homeFeedOpportunities.slice(0, 10);
 const market = getMarketById("ca-eldorado-west-slope");
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
   const opportunityMix = {
     development: homeFeed.filter((item) => item.opportunityType === "development").length,
     repositioning: homeFeed.filter((item) => item.opportunityType === "repositioning").length,

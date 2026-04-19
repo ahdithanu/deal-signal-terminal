@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LogoutButton } from "@/components/logout-button";
 import { Providers } from "@/components/providers";
+import { getAuthSession } from "@/lib/auth";
 
 import "./globals.css";
 
@@ -11,11 +13,13 @@ export const metadata: Metadata = {
     "A real estate intelligence app that ranks public permit signals into decision-ready opportunities.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getAuthSession();
+
   return (
     <html lang="en">
       <body>
@@ -31,7 +35,9 @@ export default function RootLayout({
                 </div>
 
                 <div className="nav-block">
-                  <div className="status-pill">Launch market: El Dorado County West Slope</div>
+                  <div className="status-pill">
+                    {session ? `${session.orgName} · ${session.role}` : "Launch market: El Dorado County West Slope"}
+                  </div>
                   <nav className="nav-links">
                     <Link className="nav-link" href="/">
                       Home feed
@@ -39,6 +45,12 @@ export default function RootLayout({
                     <Link className="nav-link" href="/watchlist">
                       Watchlist
                     </Link>
+                    {session?.role === "admin" ? (
+                      <Link className="nav-link" href="/admin/audit">
+                        Admin
+                      </Link>
+                    ) : null}
+                    {session ? <LogoutButton /> : null}
                   </nav>
                 </div>
               </div>

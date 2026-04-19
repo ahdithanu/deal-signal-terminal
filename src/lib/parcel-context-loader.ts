@@ -99,3 +99,8 @@ export function loadParcelContext(signal: PermitSignal): ParcelContext {
 
   return resolvedContext ?? buildMissingParcelContext(signal);
 }
+
+export const __testing = {
+  mergeParcelContexts,
+  buildMissingParcelContext,
+};

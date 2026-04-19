@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { NotesPanel } from "@/components/notes-panel";
 import { ScoreBreakdown } from "@/components/score-breakdown";
 import { WatchlistToggle } from "@/components/watchlist-toggle";
 import { buildOpportunitySummary } from "@/lib/ai";
+import { getAuthSession } from "@/lib/auth";
 import {
   formatConfidenceLevel,
   formatCurrency,
@@ -27,6 +28,12 @@ export default async function OpportunityDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const session = await getAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
   const { slug } = await params;
   const opportunity = getOpportunityBySlug(slug);
 

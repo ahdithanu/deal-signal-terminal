@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-shared";
 
-const PUBLIC_PATHS = new Set(["/login"]);
+const PUBLIC_PATHS = new Set(["/login", "/demo"]);
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/auth") || pathname === "/api/health";

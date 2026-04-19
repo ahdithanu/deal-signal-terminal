@@ -29,7 +29,7 @@ export default async function RootLayout({
               <div className="header-inner">
                 <div className="brand-block">
                   <p className="brand-mark">Deal Signal Terminal</p>
-                  <Link className="brand-title" href="/">
+                  <Link className="brand-title" href={session ? "/" : "/demo"}>
                     Find what changed before everyone else does.
                   </Link>
                 </div>
@@ -39,18 +39,31 @@ export default async function RootLayout({
                     {session ? `${session.orgName} · ${session.role}` : "Launch market: El Dorado County West Slope"}
                   </div>
                   <nav className="nav-links">
-                    <Link className="nav-link" href="/">
-                      Home feed
-                    </Link>
-                    <Link className="nav-link" href="/watchlist">
-                      Watchlist
-                    </Link>
-                    {session?.role === "admin" ? (
-                      <Link className="nav-link" href="/admin/audit">
-                        Admin
-                      </Link>
-                    ) : null}
-                    {session ? <LogoutButton /> : null}
+                    {session ? (
+                      <>
+                        <Link className="nav-link" href="/">
+                          Home feed
+                        </Link>
+                        <Link className="nav-link" href="/watchlist">
+                          Watchlist
+                        </Link>
+                        {session.role === "admin" ? (
+                          <Link className="nav-link" href="/admin/audit">
+                            Admin
+                          </Link>
+                        ) : null}
+                        <LogoutButton />
+                      </>
+                    ) : (
+                      <>
+                        <Link className="nav-link" href="/demo">
+                          Live demo
+                        </Link>
+                        <Link className="nav-link" href="/login">
+                          Sign in
+                        </Link>
+                      </>
+                    )}
                   </nav>
                 </div>
               </div>

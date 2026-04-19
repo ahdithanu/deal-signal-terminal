@@ -35,10 +35,9 @@ describe("middleware", () => {
     await expect(response.json()).resolves.toEqual({ error: "Authentication required." });
   });
 
-  it("redirects authenticated users away from the login page", () => {
+  it("allows the login page to render even when a session cookie is present", () => {
     const response = middleware(makeRequest("/login", "session-token"));
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("https://example.com/");
+    expect(response.status).toBe(200);
   });
 });

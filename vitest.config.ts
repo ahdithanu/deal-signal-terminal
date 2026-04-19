@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: "node",
     pool: "forks",
-    reporters: ["basic"],
+    reporters: [["default", { summary: false }]],
   },
   resolve: {
     alias: {

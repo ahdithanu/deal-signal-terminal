@@ -35,8 +35,8 @@ describe("scoring", () => {
   });
 
   it("prioritizes large development staging signals above weak maintenance", () => {
-    const developmentSeed = getSeed("quantum-care-sales-office-trailer");
-    const maintenanceSeed = getSeed("plaza-goldorado-hvac-replacement");
+    const developmentSeed = getSeed("quantum-care-sales-office");
+    const maintenanceSeed = getSeed("goldorado-hvac-signal");
     const developmentScore = scoreOpportunity(
       developmentSeed,
       getSignals(developmentSeed.signalIds),

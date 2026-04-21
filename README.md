@@ -1,6 +1,6 @@
-# Deal Signal Terminal
+# Build Signals
 
-Deal Signal Terminal is a developer-grade real estate intelligence app that turns public permit activity into ranked development opportunities.
+Build Signals is a developer-grade real estate intelligence app that turns public permit activity into ranked development opportunities.
 
 ## Stack
 
@@ -27,7 +27,7 @@ To smoke-test a running instance:
 
 ```bash
 SMOKE_BASE_URL=http://localhost:3000 \
-SMOKE_EMAIL=admin@dealsignal.local \
+SMOKE_EMAIL=admin@buildsignals.local \
 SMOKE_PASSWORD=change-me-now \
 npm run smoke
 ```
@@ -39,10 +39,10 @@ Copy `.env.example` to `.env.local` if you want live OpenAI memo generation.
 - `OPENAI_API_KEY`: optional; if missing, the app falls back to deterministic rules-based memos
 - `OPENAI_MODEL`: optional; defaults to `gpt-4.1-mini`
 - `LOG_LEVEL`: optional; `debug`, `info`, `warn`, or `error`
-- `DST_BOOTSTRAP_EMAIL`: bootstrap login email for the local auth store
-- `DST_BOOTSTRAP_PASSWORD`: bootstrap password for the local auth store
-- `DST_BOOTSTRAP_ORG_NAME`: organization name shown in the app shell
-- `DST_BOOTSTRAP_ORG_SLUG`: organization slug used in the auth store
+- `BUILD_SIGNALS_BOOTSTRAP_EMAIL`: bootstrap login email for the local auth store
+- `BUILD_SIGNALS_BOOTSTRAP_PASSWORD`: bootstrap password for the local auth store
+- `BUILD_SIGNALS_BOOTSTRAP_ORG_NAME`: organization name shown in the app shell
+- `BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG`: organization slug used in the auth store
 
 ## Deployment
 
@@ -52,5 +52,5 @@ The app is configured for Next.js deployment on Vercel or any Node 22-compatible
 
 - `GET /api/health` returns a lightweight health payload for uptime monitoring.
 - Server routes now emit structured JSON logs for auth and persistence activity.
-- Auth, org state, watchlist state, and notes now persist in `.data/deal-signal-terminal.db`.
+- Auth, org state, watchlist state, and notes now persist in `.data/build-signals.db`.
 - Admin users can review the recent audit trail at `/admin/audit`.

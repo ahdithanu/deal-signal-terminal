@@ -8,7 +8,7 @@ import { getAuthSession } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Deal Signal Terminal",
+  title: "Build Signals",
   description:
     "A real estate intelligence app that ranks public permit signals into decision-ready opportunities.",
 };
@@ -28,7 +28,7 @@ export default async function RootLayout({
             <header className="site-header">
               <div className="header-inner">
                 <div className="brand-block">
-                  <p className="brand-mark">Deal Signal Terminal</p>
+                  <p className="brand-mark">Build Signals</p>
                   <Link className="brand-title" href="/">
                     Find what changed before everyone else does.
                   </Link>

@@ -20,7 +20,7 @@ export default function GlobalError({
           <div className="page-stack">
             <section className="panel error-shell">
               <p className="eyebrow">Application error</p>
-              <h1 className="detail-title">Deal Signal Terminal could not render this request.</h1>
+              <h1 className="detail-title">Build Signals could not render this request.</h1>
               <p className="tight-copy">
                 The app hit a global error boundary. Retry once, and if it repeats, inspect the
                 server logs and deployment health checks.

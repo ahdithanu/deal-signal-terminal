@@ -15,7 +15,7 @@ export default async function LoginPage() {
       <section className="login-shell panel">
         <div className="login-copy">
           <p className="eyebrow">Protected access</p>
-          <h1 className="detail-title">Sign in to Deal Signal Terminal</h1>
+          <h1 className="detail-title">Sign in to Build Signals</h1>
           <p className="tight-copy">
             This environment now uses org-scoped access and server-backed persistence. Sign in with
             your organization credentials to open the feed, watchlist, and memos.

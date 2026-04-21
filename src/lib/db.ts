@@ -3,13 +3,24 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 const DEFAULT_DATA_DIR = path.join(process.cwd(), ".data");
-const DEFAULT_DB_FILE = path.join(DEFAULT_DATA_DIR, "deal-signal-terminal.db");
+const DEFAULT_DB_FILE = path.join(DEFAULT_DATA_DIR, "build-signals.db");
+const PRODUCTION_TMP_DB_FILE = "/tmp/build-signals.db";
 
 let database: DatabaseSync | null = null;
 let databasePath: string | null = null;
 
 function resolveDatabasePath(): string {
-  return process.env.DST_DB_PATH?.trim() || DEFAULT_DB_FILE;
+  const explicitPath = process.env.BUILD_SIGNALS_DB_PATH?.trim();
+
+  if (explicitPath) {
+    return explicitPath;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return PRODUCTION_TMP_DB_FILE;
+  }
+
+  return DEFAULT_DB_FILE;
 }
 
 function ensureDatabaseDir(filePath: string) {

@@ -339,6 +339,11 @@ textarea {
   font-size: 0.9rem;
 }
 
+.demo-run-callout {
+  border-color: rgba(15, 103, 88, 0.18);
+  background: rgba(26, 122, 98, 0.08);
+}
+
 .kpi-grid {
   display: grid;
   gap: 16px;
@@ -826,6 +831,35 @@ textarea {
 
 .demo-path-actions {
   margin-top: 18px;
+}
+
+.demo-summary-panel {
+  background:
+    radial-gradient(circle at left top, rgba(26, 122, 98, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 242, 234, 0.92));
+}
+
+.demo-summary-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.demo-summary-card {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.demo-summary-card p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.demo-credentials-panel {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .plain-list-tight {

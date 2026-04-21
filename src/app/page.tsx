@@ -35,7 +35,7 @@ export default async function HomePage({
           <p className="eyebrow">Developer-grade public-record intelligence</p>
           <h1 className="hero-title">See site motion before it turns into a marketed deal.</h1>
           <p className="hero-copy hero-copy-strong">
-            Deal Signal Terminal turns weekly permit noise into a short development queue with
+            Build Signals turns weekly permit noise into a short development queue with
             real parcel context, ranked urgency, and an explicit next move for acquisitions teams.
           </p>
 

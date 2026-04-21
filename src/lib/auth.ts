@@ -49,15 +49,15 @@ export type DemoWorkspaceCredentials = {
 function getBootstrapConfig() {
   const isProduction = process.env.NODE_ENV === "production";
   const email =
-    process.env.DST_BOOTSTRAP_EMAIL?.trim() ||
-    (!isProduction ? "admin@dealsignal.local" : "");
+    process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||
+    (!isProduction ? "admin@buildsignals.local" : "");
   const password =
-    process.env.DST_BOOTSTRAP_PASSWORD?.trim() ||
+    process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD?.trim() ||
     (!isProduction ? "change-me-now" : "");
   const orgName =
-    process.env.DST_BOOTSTRAP_ORG_NAME?.trim() || "Deal Signal Capital";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME?.trim() || "Build Signals";
   const orgSlug =
-    process.env.DST_BOOTSTRAP_ORG_SLUG?.trim() || "deal-signal-capital";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG?.trim() || "build-signals";
 
   return {
     email,
@@ -68,7 +68,11 @@ function getBootstrapConfig() {
 }
 
 function shouldExposeDemoCredentials() {
-  return process.env.DST_EXPOSE_DEMO_CREDENTIALS === "true" || process.env.NODE_ENV !== "production";
+  return (
+    process.env.BUILD_SIGNALS_EXPOSE_DEMO_CREDENTIALS === "true" ||
+    process.env.DST_EXPOSE_DEMO_CREDENTIALS === "true" ||
+    process.env.NODE_ENV !== "production"
+  );
 }
 
 export function getDemoWorkspaceCredentials(): DemoWorkspaceCredentials | null {

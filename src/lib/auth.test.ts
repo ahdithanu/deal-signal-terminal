@@ -4,11 +4,11 @@ const TEST_DB_PATH = `${process.cwd()}/.data/test-auth.db`;
 
 describe("auth persistence", () => {
   beforeEach(async () => {
-    process.env.DST_DB_PATH = TEST_DB_PATH;
-    process.env.DST_BOOTSTRAP_EMAIL = "admin@test.local";
-    process.env.DST_BOOTSTRAP_PASSWORD = "super-secret";
-    process.env.DST_BOOTSTRAP_ORG_NAME = "Test Org";
-    process.env.DST_BOOTSTRAP_ORG_SLUG = "test-org";
+    process.env.BUILD_SIGNALS_DB_PATH = TEST_DB_PATH;
+    process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL = "admin@test.local";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD = "super-secret";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME = "Test Org";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG = "test-org";
 
     const auth = await import("@/lib/auth");
     auth.__testing.resetStorage();
@@ -17,7 +17,7 @@ describe("auth persistence", () => {
   afterEach(async () => {
     const auth = await import("@/lib/auth");
     auth.__testing.resetStorage();
-    delete process.env.DST_DB_PATH;
+    delete process.env.BUILD_SIGNALS_DB_PATH;
   });
 
   it("creates a bootstrap user and returns an org-scoped session on login", async () => {

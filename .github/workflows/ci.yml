@@ -34,10 +34,10 @@ jobs:
 
       - name: Start application
         env:
-          DST_BOOTSTRAP_EMAIL: admin@dealsignal.local
-          DST_BOOTSTRAP_PASSWORD: change-me-now
+          BUILD_SIGNALS_BOOTSTRAP_EMAIL: admin@buildsignals.local
+          BUILD_SIGNALS_BOOTSTRAP_PASSWORD: change-me-now
         run: |
-          npm run start > /tmp/deal-signal-terminal.log 2>&1 &
+          npm run start > /tmp/build-signals.log 2>&1 &
 
       - name: Wait for health endpoint
         run: |
@@ -48,12 +48,12 @@ jobs:
             sleep 2
           done
           echo "Application failed to become healthy"
-          cat /tmp/deal-signal-terminal.log
+          cat /tmp/build-signals.log
           exit 1
 
       - name: Smoke test authenticated routes
         env:
           SMOKE_BASE_URL: http://127.0.0.1:3000
-          SMOKE_EMAIL: admin@dealsignal.local
+          SMOKE_EMAIL: admin@buildsignals.local
           SMOKE_PASSWORD: change-me-now
         run: npm run smoke

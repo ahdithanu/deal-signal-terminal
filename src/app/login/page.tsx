@@ -16,7 +16,7 @@ export default async function LoginPage() {
       <section className="login-shell panel">
         <div className="login-copy">
           <p className="eyebrow">Protected access</p>
-          <h1 className="detail-title">Sign in to Deal Signal Terminal</h1>
+          <h1 className="detail-title">Sign in to Build Signals</h1>
           <p className="tight-copy">
             This demo uses org-scoped access and server-backed persistence. Open the seeded
             workspace to review the ranked feed, jump into the strongest signal, and generate a

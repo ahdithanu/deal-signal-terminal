@@ -47,17 +47,22 @@ export type DemoWorkspaceCredentials = {
 };
 
 function getBootstrapConfig() {
-  const isProduction = process.env.NODE_ENV === "production";
   const email =
     process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||
-    (!isProduction ? "admin@buildsignals.local" : "");
+    process.env.DST_BOOTSTRAP_EMAIL?.trim() ||
+    "admin@buildsignals.local";
   const password =
     process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD?.trim() ||
-    (!isProduction ? "change-me-now" : "");
+    process.env.DST_BOOTSTRAP_PASSWORD?.trim() ||
+    "change-me-now";
   const orgName =
-    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME?.trim() || "Build Signals";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME?.trim() ||
+    process.env.DST_BOOTSTRAP_ORG_NAME?.trim() ||
+    "Build Signals";
   const orgSlug =
-    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG?.trim() || "build-signals";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG?.trim() ||
+    process.env.DST_BOOTSTRAP_ORG_SLUG?.trim() ||
+    "build-signals";
 
   return {
     email,

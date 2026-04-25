@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 
 import { LogoutButton } from "@/components/logout-button";
 import { Providers } from "@/components/providers";
@@ -72,6 +73,7 @@ export default async function RootLayout({
             <main className="page">{children}</main>
           </div>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

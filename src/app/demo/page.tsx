@@ -12,14 +12,14 @@ export default async function DemoPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack demo-page">
       <section className="hero hero-terminal">
         <div className="hero-panel hero-primary hero-primary-terminal">
           <div>
             <p className="eyebrow">Live product demo</p>
             <h1 className="hero-title">Track real development motion before it becomes a marketed deal.</h1>
             <p className="hero-copy hero-copy-strong">
-              Deal Signal Terminal turns public permit records into a ranked developer queue with
+              Build Signals turns public permit records into a ranked developer queue with
               parcel context, a clear “why this matters,” and a memo-ready next move.
             </p>
 
@@ -33,7 +33,7 @@ export default async function DemoPage() {
           </div>
 
           <div className="hero-action-row">
-            <Link className="button" href="/login">
+            <Link className="button" href="/api/auth/demo?redirect=/?demo=1">
               Open demo workspace
             </Link>
             <Link className="button button-secondary" href="/login">
@@ -92,8 +92,8 @@ export default async function DemoPage() {
               <p className="eyebrow">Seeded workspace</p>
               <h3 className="section-title">{demoCredentials.orgName}</h3>
               <p className="tight-copy">
-                The login screen exposes one-click demo entry, but these credentials are also shown
-                there if you want to demonstrate the auth flow explicitly.
+                The product can open directly into the seeded workspace, but these credentials are
+                still available if you want to demonstrate the auth flow explicitly.
               </p>
               <div className="demo-credential-list">
                 <div>

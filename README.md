@@ -53,5 +53,5 @@ The app is configured for Next.js deployment on Vercel or any Node 22-compatible
 
 - `GET /api/health` returns a lightweight health payload for uptime monitoring.
 - Server routes now emit structured JSON logs for auth and persistence activity.
-- Auth, org state, watchlist state, and notes now persist in `.data/build-signals.db` locally, and default to `/tmp/build-signals.db` in production if `BUILD_SIGNALS_DB_PATH` is not set.
+- Auth, org state, watchlist state, and notes now persist in `.data/build-signals.db`.
 - Admin users can review the recent audit trail at `/admin/audit`.

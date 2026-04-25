@@ -252,6 +252,16 @@ export async function loginWithPassword(email: string, password: string): Promis
   );
 }
 
+export async function loginWithDemoWorkspace(): Promise<AuthSession | null> {
+  const bootstrap = getBootstrapConfig();
+
+  if (!bootstrap.email || !bootstrap.password) {
+    return null;
+  }
+
+  return loginWithPassword(bootstrap.email, bootstrap.password);
+}
+
 export async function getAuthSessionByToken(token: string | undefined): Promise<AuthSession | null> {
   if (!token) {
     return null;

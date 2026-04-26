@@ -209,6 +209,48 @@ export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
           </div>
         </div>
 
+        <div className="panel feed-analysis-panel">
+          <div className="section-header panel-header">
+            <div>
+              <p className="eyebrow">Ask the set</p>
+              <h3 className="section-title">Start with a question about the visible opportunities</h3>
+            </div>
+          </div>
+
+          <div className="chip-row">
+            <button
+              className={`chip chip-button${analysisPrompt === "institutional" ? " chip-accent" : ""}`}
+              onClick={() => setAnalysisPrompt("institutional")}
+              type="button"
+            >
+              Most institutional
+            </button>
+            <button
+              className={`chip chip-button${analysisPrompt === "newest" ? " chip-accent" : ""}`}
+              onClick={() => setAnalysisPrompt("newest")}
+              type="button"
+            >
+              Newest signals
+            </button>
+            <button
+              className={`chip chip-button${analysisPrompt === "early-stage" ? " chip-accent" : ""}`}
+              onClick={() => setAnalysisPrompt("early-stage")}
+              type="button"
+            >
+              Early-stage
+            </button>
+            <button
+              className={`chip chip-button${analysisPrompt === "changed" ? " chip-accent" : ""}`}
+              onClick={() => setAnalysisPrompt("changed")}
+              type="button"
+            >
+              Changed most
+            </button>
+          </div>
+
+          <p className="analysis-response">{analysisSummary}</p>
+        </div>
+
         <div className="feed-filter-grid">
           <label className="field">
             <span className="field-label">Search</span>
@@ -360,48 +402,6 @@ export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
 
       {visibleOpportunities.length ? (
         <>
-          <div className="panel feed-analysis-panel">
-            <div className="section-header panel-header">
-              <div>
-                <p className="eyebrow">Ask the set</p>
-                <h3 className="section-title">Guided questions over the visible opportunities</h3>
-              </div>
-            </div>
-
-            <div className="chip-row">
-              <button
-                className={`chip chip-button${analysisPrompt === "institutional" ? " chip-accent" : ""}`}
-                onClick={() => setAnalysisPrompt("institutional")}
-                type="button"
-              >
-                Most institutional
-              </button>
-              <button
-                className={`chip chip-button${analysisPrompt === "newest" ? " chip-accent" : ""}`}
-                onClick={() => setAnalysisPrompt("newest")}
-                type="button"
-              >
-                Newest signals
-              </button>
-              <button
-                className={`chip chip-button${analysisPrompt === "early-stage" ? " chip-accent" : ""}`}
-                onClick={() => setAnalysisPrompt("early-stage")}
-                type="button"
-              >
-                Early-stage
-              </button>
-              <button
-                className={`chip chip-button${analysisPrompt === "changed" ? " chip-accent" : ""}`}
-                onClick={() => setAnalysisPrompt("changed")}
-                type="button"
-              >
-                Changed most
-              </button>
-            </div>
-
-            <p className="analysis-response">{analysisSummary}</p>
-          </div>
-
           <div className="feed">
             {visibleOpportunities.map((opportunity) => (
               <SignalCard key={opportunity.id} opportunity={opportunity} />

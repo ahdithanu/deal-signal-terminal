@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 
+import { HomeFeedExplorer } from "@/components/home-feed-explorer";
 import { SignalCard } from "@/components/signal-card";
 import { getAuthSession } from "@/lib/auth";
 import { homeFeedOpportunities, opportunities, getMarketById } from "@/lib/opportunities";
 
-const homeFeed = homeFeedOpportunities.slice(0, 10);
+const homeFeed = homeFeedOpportunities.slice(0, 3);
+const rankedExplorerFeed = opportunities;
 const market = getMarketById("ca-eldorado-west-slope");
 
 export default async function HomePage({
@@ -22,10 +24,10 @@ export default async function HomePage({
   }
 
   const opportunityMix = {
-    development: homeFeed.filter((item) => item.opportunityType === "development").length,
-    repositioning: homeFeed.filter((item) => item.opportunityType === "repositioning").length,
-    leasing: homeFeed.filter((item) => item.opportunityType === "leasing").length,
-    distress: homeFeed.filter((item) => item.opportunityType === "distress").length,
+    development: rankedExplorerFeed.filter((item) => item.opportunityType === "development").length,
+    repositioning: rankedExplorerFeed.filter((item) => item.opportunityType === "repositioning").length,
+    leasing: rankedExplorerFeed.filter((item) => item.opportunityType === "leasing").length,
+    distress: rankedExplorerFeed.filter((item) => item.opportunityType === "distress").length,
   };
 
   return (
@@ -69,7 +71,7 @@ export default async function HomePage({
             </div>
             <div className="hero-stat">
               <span className="hero-stat-label">Developer queue</span>
-              <strong>{homeFeed.length}</strong>
+              <strong>{rankedExplorerFeed.length}</strong>
             </div>
           </div>
         </div>
@@ -100,11 +102,10 @@ export default async function HomePage({
           <div className="section-header panel-header feed-heading">
             <div>
               <p className="eyebrow">This week&apos;s queue</p>
-              <h2 className="section-title">Signals worth moving on now</h2>
+              <h2 className="section-title">Top-ranked signals worth moving on now</h2>
             </div>
             <div className="subtle-text feed-heading-meta">
-              {homeFeed.length} developer-grade leads from {opportunities.length} normalized
-              opportunities
+              {homeFeed.length} featured leads, {rankedExplorerFeed.length} ranked opportunities in the explorer
             </div>
           </div>
 
@@ -113,6 +114,8 @@ export default async function HomePage({
               <SignalCard key={opportunity.id} opportunity={opportunity} />
             ))}
           </div>
+
+          <HomeFeedExplorer opportunities={rankedExplorerFeed} />
         </div>
 
         <div className="sidebar-stack">

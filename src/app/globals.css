@@ -155,6 +155,48 @@ textarea {
   gap: 18px;
 }
 
+.feed-controls-panel {
+  background:
+    radial-gradient(circle at left top, rgba(26, 122, 98, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 242, 234, 0.92));
+}
+
+.feed-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.feed-filter-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+  margin-top: 20px;
+}
+
+.feed-mini-grid {
+  flex: 1;
+  margin-top: 0;
+}
+
+.feed-analysis-panel {
+  background:
+    radial-gradient(circle at right top, rgba(26, 122, 98, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 242, 234, 0.92));
+}
+
+.chip-button {
+  cursor: pointer;
+}
+
+.analysis-response {
+  margin: 18px 0 0;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
 .panel,
 .signal-card,
 .kpi-card,
@@ -1244,7 +1286,8 @@ textarea {
   .home-layout,
   .detail-layout,
   .signal-card,
-  .login-shell {
+  .login-shell,
+  .feed-filter-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1275,7 +1318,8 @@ textarea {
   .detail-topline,
   .signal-top,
   .section-header,
-  .panel-header {
+  .panel-header,
+  .feed-filter-footer {
     flex-direction: column;
   }
 

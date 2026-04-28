@@ -197,6 +197,17 @@ textarea {
   color: var(--ink);
 }
 
+.feed-question-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+
+.feed-question-row .field-input {
+  flex: 1;
+}
+
 .panel,
 .signal-card,
 .kpi-card,

@@ -2,10 +2,33 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAuthSession, getDemoWorkspaceCredentials } from "@/lib/auth";
+import { formatOpportunityType } from "@/lib/formatters";
+import { opportunities } from "@/lib/opportunities";
 
 export default async function DemoPage() {
   const session = await getAuthSession();
   const demoCredentials = getDemoWorkspaceCredentials();
+  const mostInstitutional = opportunities
+    .filter((opportunity) => opportunity.projectScale !== "small")
+    .slice(0, 3);
+  const newestSignals = [...opportunities]
+    .sort(
+      (left, right) =>
+        new Date(right.metadata.latestSignalDate).getTime() -
+        new Date(left.metadata.latestSignalDate).getTime()
+    )
+    .slice(0, 3);
+  const earlyStage = opportunities
+    .filter(
+      (opportunity) =>
+        opportunity.developmentStage === "early_signal" ||
+        opportunity.developmentStage === "pre_construction"
+    )
+    .slice(0, 4);
+  const changedMost = [...opportunities]
+    .filter((opportunity) => opportunity.timeline.length > 1)
+    .sort((left, right) => right.timeline.length - left.timeline.length)
+    .slice(0, 3);
 
   if (session) {
     redirect("/?demo=1");
@@ -66,6 +89,66 @@ export default async function DemoPage() {
 
       <section className="home-layout">
         <div className="feed-column">
+          <div className="panel feed-analysis-panel">
+            <p className="eyebrow">AI insights preview</p>
+            <h2 className="section-title">Ask Build Signals what matters in this launch market</h2>
+            <p className="tight-copy">
+              Inside the workspace, these guided prompts update against the visible ranked set so
+              you can move from raw permit motion to a usable market read faster.
+            </p>
+
+            <div className="chip-row">
+              <span className="chip chip-accent">Most institutional</span>
+              <span className="chip">Newest signals</span>
+              <span className="chip">Early-stage</span>
+              <span className="chip">Changed most</span>
+            </div>
+
+            <p className="analysis-response">
+              {mostInstitutional
+                .map(
+                  (opportunity) =>
+                    `${opportunity.projectName ?? opportunity.title} (${opportunity.priorityScore}, ${formatOpportunityType(opportunity.opportunityType)})`
+                )
+                .join(", ")}{" "}
+              look the most institutional because they combine scale, clearer sponsor-style
+              context, and the strongest ranked scores in the current set.
+            </p>
+
+            <div className="demo-summary-grid">
+              <div className="demo-summary-card">
+                <span className="copy-label">Newest signals</span>
+                <p>
+                  {newestSignals
+                    .map(
+                      (opportunity) =>
+                        `${opportunity.projectName ?? opportunity.title} (${opportunity.metadata.latestSignalDate})`
+                    )
+                    .join(", ")}
+                </p>
+              </div>
+              <div className="demo-summary-card">
+                <span className="copy-label">Early-stage</span>
+                <p>
+                  {earlyStage
+                    .map((opportunity) => opportunity.projectName ?? opportunity.title)
+                    .join(", ")}
+                </p>
+              </div>
+              <div className="demo-summary-card">
+                <span className="copy-label">Changed most</span>
+                <p>
+                  {changedMost
+                    .map(
+                      (opportunity) =>
+                        `${opportunity.projectName ?? opportunity.title} (${opportunity.timeline.length} timeline events)`
+                    )
+                    .join(", ")}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="panel demo-summary-panel">
             <p className="eyebrow">Why it stands out</p>
             <h2 className="section-title">This is built for real acquisitions judgment</h2>

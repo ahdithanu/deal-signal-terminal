@@ -39,6 +39,10 @@ const defaultFilters: FeedFilterState = {
 export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
   const [filters, setFilters] = useState<FeedFilterState>(defaultFilters);
   const [analysisPrompt, setAnalysisPrompt] = useState<AnalysisPrompt>("institutional");
+  const [question, setQuestion] = useState("");
+  const [freeformAnswer, setFreeformAnswer] = useState<string | null>(null);
+  const [questionError, setQuestionError] = useState<string | null>(null);
+  const [isAsking, setIsAsking] = useState(false);
   const deferredSearch = useDeferredValue(filters.search.trim().toLowerCase());
 
   const filterOptions = useMemo(() => {
@@ -196,6 +200,46 @@ export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
       .join(", ")} show the most progression so far, which makes them the best candidates if you want to talk about what changed over time rather than just what appeared.`;
   }, [analysisPrompt, visibleOpportunities]);
 
+  async function handleAskQuestion() {
+    const trimmedQuestion = question.trim();
+
+    if (!trimmedQuestion) {
+      setQuestionError("Ask a specific question about the visible opportunities.");
+      return;
+    }
+
+    setIsAsking(true);
+    setQuestionError(null);
+
+    try {
+      const response = await fetch("/api/insights", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          question: trimmedQuestion,
+          opportunities: visibleOpportunities,
+        }),
+      });
+
+      const payload = (await response.json()) as { answer?: string; error?: string };
+
+      if (!response.ok) {
+        setQuestionError(payload.error ?? "The insights request failed.");
+        setFreeformAnswer(null);
+        return;
+      }
+
+      setFreeformAnswer(payload.answer ?? null);
+    } catch {
+      setQuestionError("The insights request failed.");
+      setFreeformAnswer(null);
+    } finally {
+      setIsAsking(false);
+    }
+  }
+
   return (
     <div className="stack">
       <div className="panel feed-controls-panel">
@@ -249,6 +293,36 @@ export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
           </div>
 
           <p className="analysis-response">{analysisSummary}</p>
+
+          <div className="field">
+            <span className="field-label">Ask a question</span>
+            <div className="feed-question-row">
+              <input
+                className="field-input"
+                onChange={(event) => setQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleAskQuestion();
+                  }
+                }}
+                placeholder="Which projects look best for near-term acquisition interest?"
+                type="text"
+                value={question}
+              />
+              <button
+                className="button"
+                disabled={isAsking || visibleOpportunities.length === 0}
+                onClick={() => void handleAskQuestion()}
+                type="button"
+              >
+                {isAsking ? "Thinking..." : "Ask"}
+              </button>
+            </div>
+          </div>
+
+          {questionError ? <p className="form-error">{questionError}</p> : null}
+          {freeformAnswer ? <p className="analysis-response">{freeformAnswer}</p> : null}
         </div>
 
         <div className="feed-filter-grid">

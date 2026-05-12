@@ -18,9 +18,8 @@ export default async function LoginPage() {
           <p className="eyebrow">Protected access</p>
           <h1 className="detail-title">Sign in to Build Signals</h1>
           <p className="tight-copy">
-            This demo uses org-scoped access and server-backed persistence. Open the seeded
-            workspace to review the ranked feed, jump into the strongest signal, and generate a
-            memo without setup friction.
+            Use the live workspace to review ranked opportunities, test the AI-assisted sourcing
+            workflow, and evaluate whether the product fits your team&apos;s acquisitions process.
           </p>
 
           <div className="login-guide">
@@ -53,6 +52,18 @@ export default async function LoginPage() {
                 </div>
               </div>
             ) : null}
+
+            <div className="login-guide-panel">
+              <p className="copy-label">Looking at this commercially?</p>
+              <h2 className="login-guide-title">Start with the pilot path</h2>
+              <p className="tight-copy">
+                If the workflow looks relevant to your team, the next step is a narrow founder-led
+                pilot in the launch market before broader rollout.
+              </p>
+              <a className="button button-secondary" href="/pilot">
+                See pilot details
+              </a>
+            </div>
           </div>
         </div>
 

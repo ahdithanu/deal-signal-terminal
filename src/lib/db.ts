@@ -72,6 +72,18 @@ function initializeDatabase(db: DatabaseSync) {
       resource_id TEXT,
       metadata_json TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS pilot_leads (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      company TEXT NOT NULL,
+      role TEXT,
+      market_focus TEXT,
+      team_size TEXT,
+      notes TEXT NOT NULL
+    );
   `);
 }
 

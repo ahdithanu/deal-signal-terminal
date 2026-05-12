@@ -48,14 +48,22 @@ export default async function RootLayout({
                           Watchlist
                         </Link>
                         {session.role === "admin" ? (
-                          <Link className="nav-link" href="/admin/audit">
-                            Admin
-                          </Link>
+                          <>
+                            <Link className="nav-link" href="/admin/pilot-leads">
+                              Pipeline
+                            </Link>
+                            <Link className="nav-link" href="/admin/audit">
+                              Admin
+                            </Link>
+                          </>
                         ) : null}
                         <LogoutButton />
                       </>
                     ) : (
                       <>
+                        <Link className="nav-link" href="/pilot">
+                          Pilot
+                        </Link>
                         <Link className="nav-link" href="/demo">
                           Live demo
                         </Link>

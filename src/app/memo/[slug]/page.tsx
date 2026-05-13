@@ -97,6 +97,33 @@ export default async function MemoPage({
 
         <div className="stack">
           <div className="panel memo-side-panel">
+            <p className="eyebrow">Source freshness</p>
+            <h3 className="section-title">Current evidence posture</h3>
+            <div className="metadata-grid">
+              <div className="metadata-card">
+                <span>Reporting window</span>
+                <strong>{opportunity.metadata.reportingWindow}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Report published</span>
+                <strong>{formatDate(opportunity.evidence[0]?.publishedAt)}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Source accessed</span>
+                <strong>{formatDate(opportunity.evidence[0]?.accessedAt)}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Parcel context as of</span>
+                <strong>{formatDate(opportunity.parcelContext.sourceAsOf)}</strong>
+              </div>
+            </div>
+            <p className="tight-copy context-source-note">
+              The memo is constrained to the visible permit record, linked source excerpts, and the
+              dated parcel snapshot shown on the opportunity page.
+            </p>
+          </div>
+
+          <div className="panel memo-side-panel">
             <p className="eyebrow">Ground rules</p>
             <h3 className="section-title">What the memo will not do</h3>
             <ul className="plain-list">

@@ -253,6 +253,11 @@ export default async function DemoPage() {
           <div className="panel">
             <p className="eyebrow">Source discipline</p>
             <h3 className="section-title">No invented facts</h3>
+            <p className="tight-copy">
+              The launch market is grounded in the El Dorado County permit activity report for
+              March 16-22, 2026, accessed on March 26, 2026, then enriched with dated parcel
+              context rather than undocumented assumptions.
+            </p>
             <ul className="plain-list">
               <li>Scores are rules-based and transparent.</li>
               <li>Memos call out missing evidence instead of guessing.</li>

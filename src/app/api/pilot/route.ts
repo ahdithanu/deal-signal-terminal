@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getDatabase } from "@/lib/db";
-import { logInfo, logWarn } from "@/lib/observability";
+import { logInfo, redactEmail } from "@/lib/observability";
+import { applyRateLimitHeaders, buildRateLimitResponse, checkRateLimit } from "@/lib/rate-limit";
+import { applySecurityHeaders } from "@/lib/security";
 
 type PilotLeadPayload = {
   name?: unknown;
@@ -25,6 +27,18 @@ function cleanOptionalString(value: unknown): string | null {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, {
+    name: "pilot-intake",
+    max: 5,
+    windowMs: 60_000 * 10,
+  });
+
+  if (!rateLimit.ok) {
+    return applySecurityHeaders(
+      buildRateLimitResponse(rateLimit, "Too many pilot requests. Please try again later.")
+    );
+  }
+
   const payload = (await request.json()) as PilotLeadPayload;
 
   const name = cleanOptionalString(payload.name);
@@ -36,22 +50,37 @@ export async function POST(request: Request) {
   const notes = cleanOptionalString(payload.notes);
 
   if (!name || !email || !company || !notes) {
-    return NextResponse.json(
-      { error: "Name, work email, company, and pilot goals are required." },
-      { status: 400 }
+    return applySecurityHeaders(
+      applyRateLimitHeaders(
+        NextResponse.json(
+          { error: "Name, work email, company, and pilot goals are required." },
+          { status: 400 }
+        ),
+        rateLimit
+      )
     );
   }
 
   const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   if (!looksLikeEmail) {
-    return NextResponse.json({ error: "Enter a valid work email." }, { status: 400 });
+    return applySecurityHeaders(
+      applyRateLimitHeaders(
+        NextResponse.json({ error: "Enter a valid work email." }, { status: 400 }),
+        rateLimit
+      )
+    );
   }
 
   if (notes.length < 20) {
-    return NextResponse.json(
-      { error: "Tell us a bit more about the workflow or market you want to test." },
-      { status: 400 }
+    return applySecurityHeaders(
+      applyRateLimitHeaders(
+        NextResponse.json(
+          { error: "Tell us a bit more about the workflow or market you want to test." },
+          { status: 400 }
+        ),
+        rateLimit
+      )
     );
   }
 
@@ -75,17 +104,22 @@ export async function POST(request: Request) {
 
   logInfo("Pilot lead captured", {
     company,
-    email,
+    email: redactEmail(email),
     marketFocus,
     role,
     teamSize,
   });
 
-  return NextResponse.json({
-    ok: true,
-    lead: {
-      id,
-      createdAt,
-    },
-  });
+  return applySecurityHeaders(
+    applyRateLimitHeaders(
+      NextResponse.json({
+        ok: true,
+        lead: {
+          id,
+          createdAt,
+        },
+      }),
+      rateLimit
+    )
+  );
 }

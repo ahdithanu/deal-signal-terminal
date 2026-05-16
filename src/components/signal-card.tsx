@@ -104,7 +104,10 @@ export function SignalCard({
               {sourceEvidence.reportLabel}
             </a>
           </span>
-          <span>Date: {formatDate(opportunity.metadata.latestSignalDate)}</span>
+          <span>Window: {opportunity.metadata.reportingWindow}</span>
+          <span>
+            Published {formatDate(sourceEvidence.publishedAt)} · Accessed {formatDate(sourceEvidence.accessedAt)}
+          </span>
           {watchlistStatus?.savedAt ? <span>Saved: {formatDate(watchlistStatus.savedAt)}</span> : null}
         </div>
 

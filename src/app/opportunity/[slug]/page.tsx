@@ -207,6 +207,53 @@ export default async function OpportunityDetailPage({
           <div className="panel">
             <div className="section-header">
               <div>
+                <p className="eyebrow">Source freshness</p>
+                <h2 className="section-title">What this read is based on</h2>
+              </div>
+              <div className="subtle-text">{opportunity.evidence.length} sourced excerpts</div>
+            </div>
+
+            <div className="metadata-grid">
+              <div className="metadata-card">
+                <span>Public source</span>
+                <strong>{opportunity.evidence[0]?.reportLabel ?? "Pending"}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Reporting window</span>
+                <strong>{opportunity.metadata.reportingWindow}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Report published</span>
+                <strong>{formatDate(opportunity.evidence[0]?.publishedAt)}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Source accessed</span>
+                <strong>{formatDate(opportunity.evidence[0]?.accessedAt)}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Latest visible signal</span>
+                <strong>{formatDate(opportunity.metadata.latestSignalDate)}</strong>
+              </div>
+              <div className="metadata-card">
+                <span>Parcel context as of</span>
+                <strong>{formatDate(opportunity.parcelContext.sourceAsOf)}</strong>
+              </div>
+            </div>
+
+            <div className="decision-card decision-card-muted">
+              <span className="copy-label">Lineage note</span>
+              <p className="tight-copy">
+                This opportunity is derived from {opportunity.signals.length} normalized permit
+                signal{opportunity.signals.length === 1 ? "" : "s"}, linked back to{" "}
+                {opportunity.evidence.length} source excerpt{opportunity.evidence.length === 1 ? "" : "s"} and
+                a parcel-context snapshot that keeps memo output tied to dated public evidence.
+              </p>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="section-header">
+              <div>
                 <p className="eyebrow">Source evidence</p>
                 <h2 className="section-title">What supports the readout</h2>
               </div>

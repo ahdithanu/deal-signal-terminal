@@ -67,6 +67,9 @@ export default async function RootLayout({
                         <Link className="nav-link" href="/demo">
                           Live demo
                         </Link>
+                        <Link className="nav-link" href="/privacy">
+                          Privacy
+                        </Link>
                         <Link className="nav-link" href="/login">
                           Sign in
                         </Link>

@@ -14,6 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
-  const leads = listPilotLeads();
+  const leads = await listPilotLeads();
   return NextResponse.json({ leads });
 }

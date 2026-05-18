@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     };
   });
 
-  recordAuditEvent({
+  await recordAuditEvent({
     orgId: session.orgId,
     userId: session.userId,
     action: "watchlist_add",
@@ -101,7 +101,7 @@ export async function DELETE(request: Request) {
     };
   });
 
-  recordAuditEvent({
+  await recordAuditEvent({
     orgId: session.orgId,
     userId: session.userId,
     action: "watchlist_remove",

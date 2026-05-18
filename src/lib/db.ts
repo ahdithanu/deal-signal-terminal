@@ -2,12 +2,38 @@ import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { buildSchemaSql, type DatabaseProvider } from "@/lib/db-schema";
+
 const DEFAULT_DATA_DIR = path.join(process.cwd(), ".data");
 const DEFAULT_DB_FILE = path.join(DEFAULT_DATA_DIR, "build-signals.db");
 const PRODUCTION_TMP_DB_FILE = "/tmp/build-signals.db";
 
 let database: DatabaseSync | null = null;
 let databasePath: string | null = null;
+
+export type DatabaseInfo = {
+  provider: DatabaseProvider;
+  sqlitePath: string | null;
+  postgresUrlConfigured: boolean;
+};
+
+export function resolveDatabaseProvider(): DatabaseProvider {
+  const explicitProvider = process.env.BUILD_SIGNALS_DB_PROVIDER?.trim().toLowerCase();
+
+  if (explicitProvider === "postgres") {
+    return "postgres";
+  }
+
+  if (explicitProvider === "sqlite") {
+    return "sqlite";
+  }
+
+  if (process.env.BUILD_SIGNALS_DATABASE_URL?.trim()) {
+    return "postgres";
+  }
+
+  return "sqlite";
+}
 
 function resolveDatabasePath(): string {
   const explicitPath = process.env.BUILD_SIGNALS_DB_PATH?.trim();
@@ -28,66 +54,41 @@ function ensureDatabaseDir(filePath: string) {
 }
 
 function initializeDatabase(db: DatabaseSync) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS organizations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      slug TEXT NOT NULL UNIQUE
-    );
+  db.exec(buildSchemaSql("sqlite"));
+}
 
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      org_id TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      role TEXT NOT NULL,
-      password_hash TEXT NOT NULL,
-      password_salt TEXT NOT NULL,
-      FOREIGN KEY (org_id) REFERENCES organizations (id)
-    );
+function getPostgresDatabaseUrl(): string {
+  const url = process.env.BUILD_SIGNALS_DATABASE_URL?.trim();
 
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      org_id TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users (id),
-      FOREIGN KEY (org_id) REFERENCES organizations (id)
+  if (!url) {
+    throw new Error(
+      "BUILD_SIGNALS_DATABASE_URL must be set when BUILD_SIGNALS_DB_PROVIDER=postgres."
     );
+  }
 
-    CREATE TABLE IF NOT EXISTS user_states (
-      state_key TEXT PRIMARY KEY,
-      watchlist_json TEXT NOT NULL,
-      notes_json TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
+  return url;
+}
 
-    CREATE TABLE IF NOT EXISTS audit_events (
-      id TEXT PRIMARY KEY,
-      occurred_at TEXT NOT NULL,
-      org_id TEXT,
-      user_id TEXT,
-      action TEXT NOT NULL,
-      resource_type TEXT NOT NULL,
-      resource_id TEXT,
-      metadata_json TEXT NOT NULL
-    );
+export function getDatabaseInfo(): DatabaseInfo {
+  const provider = resolveDatabaseProvider();
 
-    CREATE TABLE IF NOT EXISTS pilot_leads (
-      id TEXT PRIMARY KEY,
-      created_at TEXT NOT NULL,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      company TEXT NOT NULL,
-      role TEXT,
-      market_focus TEXT,
-      team_size TEXT,
-      notes TEXT NOT NULL
-    );
-  `);
+  return {
+    provider,
+    sqlitePath: provider === "sqlite" ? resolveDatabasePath() : null,
+    postgresUrlConfigured: Boolean(process.env.BUILD_SIGNALS_DATABASE_URL?.trim()),
+  };
 }
 
 export function getDatabase() {
+  const provider = resolveDatabaseProvider();
+
+  if (provider === "postgres") {
+    const configuredUrl = getPostgresDatabaseUrl();
+    throw new Error(
+      `Postgres provider selected for Build Signals (${configuredUrl}), but the runtime adapter is not wired yet. Complete the Postgres query-layer migration before deploying with BUILD_SIGNALS_DB_PROVIDER=postgres.`
+    );
+  }
+
   const nextPath = resolveDatabasePath();
 
   if (database && databasePath === nextPath) {

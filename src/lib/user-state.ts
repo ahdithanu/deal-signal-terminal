@@ -1,5 +1,6 @@
 import type { NoteRecord, UserState, WatchlistEntry, WatchlistSnapshot } from "@/types/domain";
-import { closeDatabase, getDatabase, resetDatabaseForTests } from "@/lib/db";
+import { closeDatabase, getDatabase, resetDatabaseForTests, resolveDatabaseProvider } from "@/lib/db";
+import { closePostgresPool, queryPostgres, withPostgresClient } from "@/lib/postgres";
 
 function emptyUserState(): UserState {
   return {
@@ -104,6 +105,15 @@ function rowToUserState(
 }
 
 export async function getUserState(stateKey: string): Promise<UserState> {
+  if (resolveDatabaseProvider() === "postgres") {
+    const result = await queryPostgres<{ watchlist_json: string; notes_json: string }>(
+      "SELECT watchlist_json, notes_json FROM user_states WHERE state_key = $1",
+      [stateKey]
+    );
+
+    return rowToUserState(result.rows[0]);
+  }
+
   const db = getDatabase();
   const row = db
     .prepare("SELECT watchlist_json, notes_json FROM user_states WHERE state_key = ?")
@@ -116,6 +126,38 @@ export async function updateUserState(
   stateKey: string,
   updater: (state: UserState) => UserState
 ): Promise<UserState> {
+  if (resolveDatabaseProvider() === "postgres") {
+    return withPostgresClient(async (client) => {
+      await client.query("BEGIN");
+
+      try {
+        const result = await client.query<{ watchlist_json: string; notes_json: string }>(
+          "SELECT watchlist_json, notes_json FROM user_states WHERE state_key = $1",
+          [stateKey]
+        );
+        const current = rowToUserState(result.rows[0]);
+        const next = sanitizeUserState(updater(current));
+        const now = new Date().toISOString();
+
+        await client.query(
+          `INSERT INTO user_states (state_key, watchlist_json, notes_json, updated_at)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (state_key) DO UPDATE SET
+             watchlist_json = EXCLUDED.watchlist_json,
+             notes_json = EXCLUDED.notes_json,
+             updated_at = EXCLUDED.updated_at`,
+          [stateKey, JSON.stringify(next.watchlist), JSON.stringify(next.notes), now]
+        );
+
+        await client.query("COMMIT");
+        return next;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    });
+  }
+
   const db = getDatabase();
   db.exec("BEGIN IMMEDIATE");
 
@@ -146,7 +188,12 @@ export async function updateUserState(
 
 export const __testing = {
   sanitizeUserState,
-  resetStorage() {
+  async resetStorage() {
+    if (resolveDatabaseProvider() === "postgres") {
+      await closePostgresPool();
+      return;
+    }
+
     resetDatabaseForTests();
     closeDatabase();
   },

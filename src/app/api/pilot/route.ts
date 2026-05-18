@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
-import { getDatabase } from "@/lib/db";
 import { logInfo, redactEmail } from "@/lib/observability";
+import { createPilotLead } from "@/lib/pilot-leads";
 import { applyRateLimitHeaders, buildRateLimitResponse, checkRateLimit } from "@/lib/rate-limit";
 import { applySecurityHeaders } from "@/lib/security";
 
@@ -84,23 +84,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = getDatabase();
   const id = randomUUID();
   const createdAt = new Date().toISOString();
 
-  db.prepare(
-    `INSERT INTO pilot_leads (
-      id,
-      created_at,
-      name,
-      email,
-      company,
-      role,
-      market_focus,
-      team_size,
-      notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, createdAt, name, email, company, role, marketFocus, teamSize, notes);
+  await createPilotLead({
+    id,
+    createdAt,
+    name,
+    email,
+    company,
+    role,
+    marketFocus,
+    teamSize,
+    notes,
+  });
 
   logInfo("Pilot lead captured", {
     company,

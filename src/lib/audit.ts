@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { getDatabase } from "@/lib/db";
+import { getDatabase, resolveDatabaseProvider } from "@/lib/db";
+import { queryPostgres } from "@/lib/postgres";
 
 type AuditEventInput = {
   orgId?: string | null;
@@ -11,7 +12,48 @@ type AuditEventInput = {
   metadata?: Record<string, unknown>;
 };
 
-export function recordAuditEvent(event: AuditEventInput) {
+export type AuditEventRecord = {
+  id: string;
+  occurred_at: string;
+  org_id: string | null;
+  user_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  metadata_json: string;
+};
+
+export async function recordAuditEvent(event: AuditEventInput) {
+  const id = randomUUID();
+  const occurredAt = new Date().toISOString();
+  const metadataJson = JSON.stringify(event.metadata ?? {});
+
+  if (resolveDatabaseProvider() === "postgres") {
+    await queryPostgres(
+      `INSERT INTO audit_events (
+        id,
+        occurred_at,
+        org_id,
+        user_id,
+        action,
+        resource_type,
+        resource_id,
+        metadata_json
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        id,
+        occurredAt,
+        event.orgId ?? null,
+        event.userId ?? null,
+        event.action,
+        event.resourceType,
+        event.resourceId ?? null,
+        metadataJson,
+      ]
+    );
+    return;
+  }
+
   const db = getDatabase();
 
   db.prepare(
@@ -26,14 +68,14 @@ export function recordAuditEvent(event: AuditEventInput) {
       metadata_json
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
-    randomUUID(),
-    new Date().toISOString(),
+    id,
+    occurredAt,
     event.orgId ?? null,
     event.userId ?? null,
     event.action,
     event.resourceType,
     event.resourceId ?? null,
-    JSON.stringify(event.metadata ?? {})
+    metadataJson
   );
 }
 
@@ -42,9 +84,51 @@ type ListRecentAuditEventsOptions = {
   orgId?: string;
 };
 
-export function listRecentAuditEvents(options: ListRecentAuditEventsOptions = {}) {
-  const db = getDatabase();
+export async function listRecentAuditEvents(options: ListRecentAuditEventsOptions = {}) {
   const limit = options.limit ?? 50;
+
+  if (resolveDatabaseProvider() === "postgres") {
+    if (options.orgId) {
+      const result = await queryPostgres<AuditEventRecord>(
+        `SELECT
+          id,
+          occurred_at,
+          org_id,
+          user_id,
+          action,
+          resource_type,
+          resource_id,
+          metadata_json
+        FROM audit_events
+        WHERE org_id = $1
+        ORDER BY occurred_at DESC
+        LIMIT $2`,
+        [options.orgId, limit]
+      );
+
+      return result.rows;
+    }
+
+    const result = await queryPostgres<AuditEventRecord>(
+      `SELECT
+        id,
+        occurred_at,
+        org_id,
+        user_id,
+        action,
+        resource_type,
+        resource_id,
+        metadata_json
+      FROM audit_events
+      ORDER BY occurred_at DESC
+      LIMIT $1`,
+      [limit]
+    );
+
+    return result.rows;
+  }
+
+  const db = getDatabase();
 
   if (options.orgId) {
     return db
@@ -63,16 +147,7 @@ export function listRecentAuditEvents(options: ListRecentAuditEventsOptions = {}
         ORDER BY occurred_at DESC
         LIMIT ?`
       )
-      .all(options.orgId, limit) as Array<{
-      id: string;
-      occurred_at: string;
-      org_id: string | null;
-      user_id: string | null;
-      action: string;
-      resource_type: string;
-      resource_id: string | null;
-      metadata_json: string;
-    }>;
+      .all(options.orgId, limit) as AuditEventRecord[];
   }
 
   return db
@@ -90,14 +165,5 @@ export function listRecentAuditEvents(options: ListRecentAuditEventsOptions = {}
       ORDER BY occurred_at DESC
       LIMIT ?`
     )
-    .all(limit) as Array<{
-    id: string;
-    occurred_at: string;
-    org_id: string | null;
-    user_id: string | null;
-    action: string;
-    resource_type: string;
-    resource_id: string | null;
-    metadata_json: string;
-  }>;
+    .all(limit) as AuditEventRecord[];
 }

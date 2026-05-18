@@ -18,7 +18,7 @@ describe("audit persistence", () => {
   it("records and returns recent audit events in descending order", async () => {
     const audit = await import("@/lib/audit");
 
-    audit.recordAuditEvent({
+    await audit.recordAuditEvent({
       orgId: "org-1",
       userId: "user-1",
       action: "watchlist.add",
@@ -26,7 +26,7 @@ describe("audit persistence", () => {
       resourceId: "opp-1",
       metadata: { source: "watchlist" },
     });
-    audit.recordAuditEvent({
+    await audit.recordAuditEvent({
       orgId: "org-1",
       userId: "user-1",
       action: "note.upsert",
@@ -35,7 +35,7 @@ describe("audit persistence", () => {
       metadata: { size: 42 },
     });
 
-    const events = audit.listRecentAuditEvents();
+    const events = await audit.listRecentAuditEvents();
 
     expect(events).toHaveLength(2);
     expect(events[0].action).toBe("note.upsert");
@@ -46,14 +46,14 @@ describe("audit persistence", () => {
   it("filters audit events by org when requested", async () => {
     const audit = await import("@/lib/audit");
 
-    audit.recordAuditEvent({
+    await audit.recordAuditEvent({
       orgId: "org-1",
       userId: "user-1",
       action: "watchlist.add",
       resourceType: "opportunity",
       resourceId: "opp-1",
     });
-    audit.recordAuditEvent({
+    await audit.recordAuditEvent({
       orgId: "org-2",
       userId: "user-2",
       action: "watchlist.add",
@@ -61,7 +61,7 @@ describe("audit persistence", () => {
       resourceId: "opp-2",
     });
 
-    const events = audit.listRecentAuditEvents({ orgId: "org-1" });
+    const events = await audit.listRecentAuditEvents({ orgId: "org-1" });
 
     expect(events).toHaveLength(1);
     expect(events[0].org_id).toBe("org-1");

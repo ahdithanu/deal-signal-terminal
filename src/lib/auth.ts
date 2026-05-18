@@ -1,7 +1,13 @@
 import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-shared";
-import { closeDatabase, getDatabase, resetDatabaseForTests } from "@/lib/db";
+import {
+  closeDatabase,
+  getDatabase,
+  resetDatabaseForTests,
+  resolveDatabaseProvider,
+} from "@/lib/db";
+import { closePostgresPool, queryPostgres, withPostgresClient } from "@/lib/postgres";
 
 type AuthRole = "admin" | "member";
 
@@ -26,6 +32,28 @@ type SessionRecord = {
   userId: string;
   orgId: string;
   expiresAt: string;
+};
+
+type SqliteUserRow = {
+  id: string;
+  org_id: string;
+  email: string;
+  name: string;
+  role: AuthRole;
+  password_hash: string;
+  password_salt: string;
+};
+
+type SessionJoinRecord = {
+  token: string;
+  user_id: string;
+  org_id: string;
+  expires_at: string;
+  email: string;
+  name: string;
+  role: AuthRole;
+  org_name: string;
+  org_slug: string;
 };
 
 export type AuthSession = {
@@ -135,40 +163,6 @@ function verifyPassword(password: string, salt: string, expectedHash: string): b
   return timingSafeEqual(actual, expected);
 }
 
-async function ensureBootstrapUser() {
-  const db = getDatabase();
-  const existingUser = db.prepare("SELECT id FROM users LIMIT 1").get() as { id: string } | undefined;
-
-  if (existingUser) {
-    return;
-  }
-
-  const bootstrap = getBootstrapConfig();
-
-  if (!bootstrap.email || !bootstrap.password) {
-    return;
-  }
-
-  const salt = randomBytes(16).toString("hex");
-  const orgId = randomUUID();
-  const userId = randomUUID();
-
-  db.prepare(
-    "INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)"
-  ).run(orgId, bootstrap.orgName, bootstrap.orgSlug);
-  db.prepare(
-    "INSERT INTO users (id, org_id, email, name, role, password_hash, password_salt) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).run(
-    userId,
-    orgId,
-    bootstrap.email.toLowerCase(),
-    "Platform Admin",
-    "admin",
-    hashPassword(bootstrap.password, salt),
-    salt
-  );
-}
-
 function buildSession(
   user: Pick<UserRecord, "id" | "email" | "name" | "role">,
   org: OrganizationRecord,
@@ -186,18 +180,6 @@ function buildSession(
     expiresAt: sessionRecord.expiresAt,
   };
 }
-
-type SessionJoinRecord = {
-  token: string;
-  user_id: string;
-  org_id: string;
-  expires_at: string;
-  email: string;
-  name: string;
-  role: AuthRole;
-  org_name: string;
-  org_slug: string;
-};
 
 function rowToSession(record: SessionJoinRecord): AuthSession {
   return buildSession(
@@ -221,37 +203,198 @@ function rowToSession(record: SessionJoinRecord): AuthSession {
   );
 }
 
+function sqliteUserRowToRecord(user: SqliteUserRow): UserRecord {
+  return {
+    id: user.id,
+    orgId: user.org_id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    passwordHash: user.password_hash,
+    passwordSalt: user.password_salt,
+  };
+}
+
+async function ensureBootstrapUserSqlite() {
+  const db = getDatabase();
+  const existingUser = db.prepare("SELECT id FROM users LIMIT 1").get() as { id: string } | undefined;
+
+  if (existingUser) {
+    return;
+  }
+
+  const bootstrap = getBootstrapConfig();
+
+  if (!bootstrap.email || !bootstrap.password) {
+    return;
+  }
+
+  const salt = randomBytes(16).toString("hex");
+  const orgId = randomUUID();
+  const userId = randomUUID();
+
+  db.prepare("INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)").run(
+    orgId,
+    bootstrap.orgName,
+    bootstrap.orgSlug
+  );
+  db.prepare(
+    "INSERT INTO users (id, org_id, email, name, role, password_hash, password_salt) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run(
+    userId,
+    orgId,
+    bootstrap.email.toLowerCase(),
+    "Platform Admin",
+    "admin",
+    hashPassword(bootstrap.password, salt),
+    salt
+  );
+}
+
+async function ensureBootstrapUserPostgres() {
+  const bootstrap = getBootstrapConfig();
+
+  if (!bootstrap.email || !bootstrap.password) {
+    return;
+  }
+
+  const existingUser = await queryPostgres<{ id: string }>("SELECT id FROM users LIMIT 1");
+
+  if (existingUser.rowCount) {
+    return;
+  }
+
+  const salt = randomBytes(16).toString("hex");
+  const orgId = randomUUID();
+  const userId = randomUUID();
+
+  await withPostgresClient(async (client) => {
+    await client.query("BEGIN");
+
+    try {
+      await client.query("INSERT INTO organizations (id, name, slug) VALUES ($1, $2, $3)", [
+        orgId,
+        bootstrap.orgName,
+        bootstrap.orgSlug,
+      ]);
+      await client.query(
+        "INSERT INTO users (id, org_id, email, name, role, password_hash, password_salt) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [
+          userId,
+          orgId,
+          bootstrap.email.toLowerCase(),
+          "Platform Admin",
+          "admin",
+          hashPassword(bootstrap.password, salt),
+          salt,
+        ]
+      );
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  });
+}
+
+async function ensureBootstrapUser() {
+  if (resolveDatabaseProvider() === "postgres") {
+    return ensureBootstrapUserPostgres();
+  }
+
+  return ensureBootstrapUserSqlite();
+}
+
 export function userStateKeyForSession(session: Pick<AuthSession, "orgId" | "userId">): string {
   return `${session.orgId}:${session.userId}`;
 }
 
 export async function loginWithPassword(email: string, password: string): Promise<AuthSession | null> {
   await ensureBootstrapUser();
-  const db = getDatabase();
 
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = db.prepare(
-    "SELECT id, org_id, email, name, role, password_hash, password_salt FROM users WHERE email = ?"
-  ).get(normalizedEmail) as
-    | {
-        id: string;
-        org_id: string;
-        email: string;
-        name: string;
-        role: AuthRole;
-        password_hash: string;
-        password_salt: string;
+  if (resolveDatabaseProvider() === "postgres") {
+    const normalizedEmail = email.trim().toLowerCase();
+    const userResult = await queryPostgres<SqliteUserRow>(
+      "SELECT id, org_id, email, name, role, password_hash, password_salt FROM users WHERE email = $1",
+      [normalizedEmail]
+    );
+    const userRow = userResult.rows[0];
+
+    if (!userRow) {
+      return null;
+    }
+
+    const user = sqliteUserRowToRecord(userRow);
+
+    if (!verifyPassword(password, user.passwordSalt, user.passwordHash)) {
+      return null;
+    }
+
+    const sessionRecord: SessionRecord = {
+      token: randomUUID(),
+      userId: user.id,
+      orgId: user.orgId,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+    };
+
+    await withPostgresClient(async (client) => {
+      await client.query("BEGIN");
+
+      try {
+        await client.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
+        await client.query(
+          "INSERT INTO sessions (token, user_id, org_id, expires_at) VALUES ($1, $2, $3, $4)",
+          [sessionRecord.token, sessionRecord.userId, sessionRecord.orgId, sessionRecord.expiresAt]
+        );
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
       }
-    | undefined;
+    });
 
-  if (!user || !verifyPassword(password, user.password_salt, user.password_hash)) {
+    const orgResult = await queryPostgres<OrganizationRecord>(
+      "SELECT id, name, slug FROM organizations WHERE id = $1",
+      [user.orgId]
+    );
+    const org = orgResult.rows[0];
+
+    if (!org) {
+      return null;
+    }
+
+    return buildSession(
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      org,
+      sessionRecord
+    );
+  }
+
+  const db = getDatabase();
+  const normalizedEmail = email.trim().toLowerCase();
+  const userRow = db.prepare(
+    "SELECT id, org_id, email, name, role, password_hash, password_salt FROM users WHERE email = ?"
+  ).get(normalizedEmail) as SqliteUserRow | undefined;
+
+  if (!userRow) {
+    return null;
+  }
+
+  const user = sqliteUserRowToRecord(userRow);
+
+  if (!verifyPassword(password, user.passwordSalt, user.passwordHash)) {
     return null;
   }
 
   const sessionRecord: SessionRecord = {
     token: randomUUID(),
     userId: user.id,
-    orgId: user.org_id,
+    orgId: user.orgId,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
   };
 
@@ -263,7 +406,7 @@ export async function loginWithPassword(email: string, password: string): Promis
     sessionRecord.expiresAt
   );
 
-  const org = db.prepare("SELECT id, name, slug FROM organizations WHERE id = ?").get(user.org_id) as
+  const org = db.prepare("SELECT id, name, slug FROM organizations WHERE id = ?").get(user.orgId) as
     | OrganizationRecord
     | undefined;
 
@@ -297,6 +440,40 @@ export async function getAuthSessionByToken(token: string | undefined): Promise<
   }
 
   await ensureBootstrapUser();
+
+  if (resolveDatabaseProvider() === "postgres") {
+    const sessionResult = await queryPostgres<SessionJoinRecord>(
+      `SELECT
+        sessions.token,
+        sessions.user_id,
+        sessions.org_id,
+        sessions.expires_at,
+        users.email,
+        users.name,
+        users.role,
+        organizations.name AS org_name,
+        organizations.slug AS org_slug
+      FROM sessions
+      INNER JOIN users ON users.id = sessions.user_id
+      INNER JOIN organizations ON organizations.id = sessions.org_id
+      WHERE sessions.token = $1`,
+      [token]
+    );
+
+    const sessionRecord = sessionResult.rows[0];
+
+    if (!sessionRecord) {
+      return null;
+    }
+
+    if (new Date(sessionRecord.expires_at).getTime() <= Date.now()) {
+      await queryPostgres("DELETE FROM sessions WHERE token = $1", [token]);
+      return null;
+    }
+
+    return rowToSession(sessionRecord);
+  }
+
   const db = getDatabase();
   const sessionRecord = db
     .prepare(
@@ -342,13 +519,23 @@ export async function clearAuthSession(token: string | undefined) {
     return;
   }
 
+  if (resolveDatabaseProvider() === "postgres") {
+    await queryPostgres("DELETE FROM sessions WHERE token = $1", [token]);
+    return;
+  }
+
   const db = getDatabase();
   db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
 }
 
 export const __testing = {
   ensureBootstrapUser,
-  resetStorage() {
+  async resetStorage() {
+    if (resolveDatabaseProvider() === "postgres") {
+      await closePostgresPool();
+      return;
+    }
+
     resetDatabaseForTests();
     closeDatabase();
   },

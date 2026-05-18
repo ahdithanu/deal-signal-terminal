@@ -10,7 +10,7 @@ export async function POST() {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_SESSION_COOKIE)?.value;
 
-  recordAuditEvent({
+  await recordAuditEvent({
     action: "logout",
     resourceType: "session",
     resourceId: token ?? null,

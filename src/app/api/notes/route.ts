@@ -69,7 +69,7 @@ export async function PUT(request: Request) {
     };
   });
 
-  recordAuditEvent({
+  await recordAuditEvent({
     orgId: session.orgId,
     userId: session.userId,
     action: trimmedBody.length === 0 ? "note_delete" : "note_upsert",

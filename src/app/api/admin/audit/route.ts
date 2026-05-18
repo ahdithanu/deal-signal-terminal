@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import type { AuditEventRecord } from "@/lib/audit";
 import { getAuthSession } from "@/lib/auth";
 import { listRecentAuditEvents } from "@/lib/audit";
 
@@ -14,7 +15,7 @@ export async function GET() {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
-  const events = listRecentAuditEvents({ orgId: session.orgId }).map((event) => ({
+  const events = (await listRecentAuditEvents({ orgId: session.orgId })).map((event: AuditEventRecord) => ({
     id: event.id,
     occurredAt: event.occurred_at,
     orgId: event.org_id,

@@ -80,6 +80,7 @@ async function main() {
     { path: `/memo/${demoSlug}`, expectedStatus: 200 },
     { path: "/opportunity/not-a-real-slug", expectedStatus: 404 },
     { path: "/api/admin/audit", expectedStatus: 200 },
+    { path: "/api/admin/data-health", expectedStatus: 200 },
   ];
 
   for (const route of authenticatedRoutes) {

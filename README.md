@@ -7,7 +7,7 @@ Build Signals is a developer-grade real estate intelligence app that turns publi
 - Next.js App Router
 - TypeScript
 - React 19
-- SQLite-backed local persistence today, with Postgres migration groundwork now in place
+- SQLite-backed local persistence today, with Postgres adapter work and data ingestion groundwork now in place
 - Rules-based scoring with fact-safe memo generation
 
 ## Local development
@@ -50,13 +50,25 @@ Copy `.env.example` to `.env.local` if you want live OpenAI memo generation.
 
 ## Postgres migration foundation
 
-The app still runs on SQLite by default, but the first Postgres migration layer is now in place:
+The app still runs on SQLite by default, but the Postgres migration layer is now in place for the core persisted workflows:
 
 - canonical schema definitions live in `src/lib/db-schema.ts`
 - a bootstrap SQL file for Postgres lives in `scripts/postgres-bootstrap.sql`
 - the health endpoint now reports which database provider is configured
+- auth, sessions, pilot leads, audit events, and user state have provider-aware adapters
 
-Today, setting `BUILD_SIGNALS_DB_PROVIDER=postgres` is a configuration step only. The runtime query layer still needs to be migrated before Postgres can be used in production.
+Set `BUILD_SIGNALS_DB_PROVIDER=postgres` and `BUILD_SIGNALS_DATABASE_URL` to run the migrated persistence paths against Postgres.
+
+## Data ingestion foundation
+
+Build Signals now has the storage layer needed for real permit ingestion:
+
+- `source_documents` tracks report files, source URLs, report windows, checksums, and access timing
+- `permit_records` stores normalized raw permit rows with source-document lineage
+- `ingestion_runs` records run status, counts, failures, and timing
+- admin users can review coverage and ingestion status at `/admin/data-health`
+
+The next data step is adding source-specific ingestion scripts that fetch or load permit reports and upsert normalized records into these tables.
 
 ## Deployment
 
@@ -69,3 +81,4 @@ The app is configured for Next.js deployment on Vercel or any Node 22-compatible
 - Server routes now emit structured JSON logs for auth and persistence activity.
 - Auth, org state, watchlist state, and notes now persist in `.data/build-signals.db`.
 - Admin users can review the recent audit trail at `/admin/audit`.
+- Admin users can review source coverage and ingestion status at `/admin/data-health`.

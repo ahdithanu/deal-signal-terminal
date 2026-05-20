@@ -808,6 +808,23 @@ textarea {
   font-size: 1.9rem;
 }
 
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.metric-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 4vw, 4.2rem);
+  line-height: 1;
+}
+
+.metric-value-text {
+  font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+}
+
 .plain-list {
   margin: 18px 0 0;
   padding-left: 18px;
@@ -1391,6 +1408,7 @@ textarea {
 
   .metadata-grid,
   .mini-grid,
+  .metric-grid,
   .decision-grid,
   .timeline-row {
     grid-template-columns: 1fr;

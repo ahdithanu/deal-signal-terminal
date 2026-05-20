@@ -50,3 +50,60 @@ CREATE TABLE IF NOT EXISTS pilot_leads (
   team_size TEXT,
   notes TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS source_documents (
+  id TEXT PRIMARY KEY,
+  market_id TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  source_url TEXT NOT NULL,
+  document_url TEXT NOT NULL,
+  report_label TEXT NOT NULL,
+  reporting_period_start TEXT,
+  reporting_period_end TEXT,
+  published_at TEXT,
+  accessed_at TEXT NOT NULL,
+  checksum TEXT,
+  metadata_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS permit_records (
+  id TEXT PRIMARY KEY,
+  source_document_id TEXT NOT NULL REFERENCES source_documents (id),
+  market_id TEXT NOT NULL,
+  jurisdiction TEXT NOT NULL,
+  permit_number TEXT NOT NULL,
+  permit_type TEXT NOT NULL,
+  permit_subtype TEXT,
+  status TEXT,
+  applied_date TEXT,
+  issued_date TEXT,
+  finaled_date TEXT,
+  address TEXT,
+  city TEXT,
+  parcel_number TEXT,
+  applicant TEXT,
+  contractor TEXT,
+  valuation DOUBLE PRECISION,
+  description TEXT NOT NULL,
+  raw_json TEXT NOT NULL,
+  content_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (market_id, permit_number)
+);
+
+CREATE TABLE IF NOT EXISTS ingestion_runs (
+  id TEXT PRIMARY KEY,
+  source_document_id TEXT REFERENCES source_documents (id),
+  market_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  records_found INTEGER NOT NULL DEFAULT 0,
+  records_inserted INTEGER NOT NULL DEFAULT 0,
+  records_updated INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  metadata_json TEXT NOT NULL
+);

@@ -12,6 +12,7 @@ export async function GET() {
     database: {
       provider: database.provider,
       postgresUrlConfigured: database.postgresUrlConfigured,
+      runtimeReady: database.runtimeReady,
     },
   });
 }

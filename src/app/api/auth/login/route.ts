@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       orgId: session.orgId,
       email: redactEmail(session.email),
     });
-    recordAuditEvent({
+    await recordAuditEvent({
       orgId: session.orgId,
       userId: session.userId,
       action: "login",

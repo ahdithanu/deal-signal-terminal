@@ -15,6 +15,7 @@ export type DatabaseInfo = {
   provider: DatabaseProvider;
   sqlitePath: string | null;
   postgresUrlConfigured: boolean;
+  runtimeReady: boolean;
 };
 
 export function resolveDatabaseProvider(): DatabaseProvider {
@@ -57,18 +58,6 @@ function initializeDatabase(db: DatabaseSync) {
   db.exec(buildSchemaSql("sqlite"));
 }
 
-function getPostgresDatabaseUrl(): string {
-  const url = process.env.BUILD_SIGNALS_DATABASE_URL?.trim();
-
-  if (!url) {
-    throw new Error(
-      "BUILD_SIGNALS_DATABASE_URL must be set when BUILD_SIGNALS_DB_PROVIDER=postgres."
-    );
-  }
-
-  return url;
-}
-
 export function getDatabaseInfo(): DatabaseInfo {
   const provider = resolveDatabaseProvider();
 
@@ -76,6 +65,8 @@ export function getDatabaseInfo(): DatabaseInfo {
     provider,
     sqlitePath: provider === "sqlite" ? resolveDatabasePath() : null,
     postgresUrlConfigured: Boolean(process.env.BUILD_SIGNALS_DATABASE_URL?.trim()),
+    runtimeReady:
+      provider === "sqlite" || Boolean(process.env.BUILD_SIGNALS_DATABASE_URL?.trim()),
   };
 }
 
@@ -83,9 +74,8 @@ export function getDatabase() {
   const provider = resolveDatabaseProvider();
 
   if (provider === "postgres") {
-    const configuredUrl = getPostgresDatabaseUrl();
     throw new Error(
-      `Postgres provider selected for Build Signals (${configuredUrl}), but the runtime adapter is not wired yet. Complete the Postgres query-layer migration before deploying with BUILD_SIGNALS_DB_PROVIDER=postgres.`
+      "SQLite database accessor called while BUILD_SIGNALS_DB_PROVIDER=postgres. Route this codepath through the Postgres adapter instead of getDatabase()."
     );
   }
 

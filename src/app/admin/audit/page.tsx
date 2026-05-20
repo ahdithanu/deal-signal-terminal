@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import type { AuditEventRecord } from "@/lib/audit";
 import { getAuthSession } from "@/lib/auth";
 import { listRecentAuditEvents } from "@/lib/audit";
 import { formatDate } from "@/lib/formatters";
@@ -15,10 +16,10 @@ export default async function AuditAdminPage() {
     redirect("/");
   }
 
-  const events = listRecentAuditEvents({
+  const events = (await listRecentAuditEvents({
     limit: 100,
     orgId: session.orgId,
-  }).map((event) => ({
+  })).map((event: AuditEventRecord) => ({
     id: event.id,
     occurredAt: event.occurred_at,
     orgId: event.org_id,
@@ -66,7 +67,7 @@ export default async function AuditAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {events.map((event) => (
+              {events.map((event: (typeof events)[number]) => (
                 <tr key={event.id}>
                   <td>{formatDate(event.occurredAt.slice(0, 10))}</td>
                   <td>{event.action}</td>

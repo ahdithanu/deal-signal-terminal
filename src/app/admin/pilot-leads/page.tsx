@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getAuthSession } from "@/lib/auth";
 import { formatDate } from "@/lib/formatters";
+import type { PilotLeadRecord } from "@/lib/pilot-leads";
 import { listPilotLeads } from "@/lib/pilot-leads";
 
 export default async function PilotLeadsAdminPage() {
@@ -15,7 +16,7 @@ export default async function PilotLeadsAdminPage() {
     redirect("/");
   }
 
-  const leads = listPilotLeads();
+  const leads = await listPilotLeads();
 
   return (
     <div className="page-stack">
@@ -55,7 +56,7 @@ export default async function PilotLeadsAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {leads.map((lead) => (
+              {leads.map((lead: PilotLeadRecord) => (
                 <tr key={lead.id}>
                   <td>{formatDate(lead.created_at.slice(0, 10))}</td>
                   <td>

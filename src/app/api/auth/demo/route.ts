@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       email: redactEmail(session.email),
     });
 
-    recordAuditEvent({
+    await recordAuditEvent({
       orgId: session.orgId,
       userId: session.userId,
       action: "login",

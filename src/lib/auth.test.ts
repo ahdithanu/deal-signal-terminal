@@ -46,4 +46,28 @@ describe("auth persistence", () => {
 
     expect(session).toBeNull();
   });
+
+  it("updates the current admin workspace identity", async () => {
+    const auth = await import("@/lib/auth");
+    const session = await auth.loginWithPassword("admin@test.local", "super-secret");
+
+    expect(session).not.toBeNull();
+
+    await auth.updateWorkspaceIdentity(session!, {
+      orgName: "Build Signals",
+      orgSlug: "build-signals",
+      adminEmail: "admin@buildsignals.local",
+    });
+
+    const restored = await auth.getAuthSessionByToken(session?.token);
+    const oldLogin = await auth.loginWithPassword("admin@test.local", "super-secret");
+    const newLogin = await auth.loginWithPassword("admin@buildsignals.local", "super-secret");
+
+    expect(restored?.orgName).toBe("Build Signals");
+    expect(restored?.orgSlug).toBe("build-signals");
+    expect(restored?.email).toBe("admin@buildsignals.local");
+    expect(oldLogin).toBeNull();
+    expect(newLogin?.orgName).toBe("Build Signals");
+    expect(newLogin?.email).toBe("admin@buildsignals.local");
+  });
 });

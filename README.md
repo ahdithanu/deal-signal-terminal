@@ -47,6 +47,8 @@ Copy `.env.example` to `.env.local` if you want live OpenAI memo generation.
 - `BUILD_SIGNALS_DB_PROVIDER`: `sqlite` (default) or `postgres`
 - `BUILD_SIGNALS_DATABASE_URL`: required when `BUILD_SIGNALS_DB_PROVIDER=postgres`
 - `BUILD_SIGNALS_DB_PATH`: optional override for the SQLite file path
+- `CRON_SECRET`: bearer token Vercel sends to scheduled ingestion endpoints; required for
+  cron route execution
 
 ## Postgres migration foundation
 
@@ -69,6 +71,7 @@ Build Signals now has the storage layer needed for real permit ingestion:
 - admin users can review coverage and ingestion status at `/admin/data-health`
 - admin users can run the first El Dorado normalized-source load from `/admin/data-health`
   or by posting to `/api/admin/ingest/eldorado`
+- Vercel Cron runs the El Dorado ingest daily via `/api/cron/ingest/eldorado`
 
 The current El Dorado ingest loads the normalized permit signals already represented in the
 application into the durable ingestion tables. The next data step is replacing that curated input
@@ -77,6 +80,10 @@ with a source-specific parser that fetches or loads the county report and normal
 ## Deployment
 
 The app is configured for Next.js deployment on Vercel or any Node 22-compatible host.
+
+`vercel.json` schedules the El Dorado ingestion route daily at 13:00 UTC. Set `CRON_SECRET`
+in Vercel so scheduled requests include `Authorization: Bearer <secret>`. Use the same header
+for manual operator runs without a browser session.
 
 ## Operational checks
 

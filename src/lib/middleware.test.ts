@@ -28,6 +28,12 @@ describe("middleware", () => {
     expect(response.status).toBe(200);
   });
 
+  it("allows cron endpoints through middleware so route-level cron auth can run", () => {
+    const response = middleware(makeRequest("/api/cron/ingest/eldorado"));
+
+    expect(response.status).toBe(200);
+  });
+
   it("returns a 401 JSON response for protected API requests without a session", async () => {
     const response = middleware(makeRequest("/api/admin/audit"));
 

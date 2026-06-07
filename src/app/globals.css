@@ -786,6 +786,12 @@ textarea {
   white-space: nowrap;
 }
 
+.admin-action-stack {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
 .score-panel .button {
   background: #f4f1ea;
   color: #12181d;

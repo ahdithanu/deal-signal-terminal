@@ -74,6 +74,12 @@ export type DemoWorkspaceCredentials = {
   orgName: string;
 };
 
+export type WorkspaceIdentityUpdate = {
+  orgName: string;
+  orgSlug: string;
+  adminEmail: string;
+};
+
 const DEMO_SESSION_TOKEN = "build-signals-demo-session";
 
 function getBootstrapConfig() {
@@ -526,6 +532,77 @@ export async function clearAuthSession(token: string | undefined) {
 
   const db = getDatabase();
   db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+}
+
+export async function updateWorkspaceIdentity(
+  session: Pick<AuthSession, "orgId" | "userId" | "role">,
+  identity: WorkspaceIdentityUpdate
+) {
+  if (session.role !== "admin") {
+    throw new Error("Only admins can update workspace identity.");
+  }
+
+  const nextOrgName = identity.orgName.trim();
+  const nextOrgSlug = identity.orgSlug.trim();
+  const nextAdminEmail = identity.adminEmail.trim().toLowerCase();
+
+  if (!nextOrgName || !nextOrgSlug || !nextAdminEmail) {
+    throw new Error("Workspace identity values are required.");
+  }
+
+  if (resolveDatabaseProvider() === "postgres") {
+    await withPostgresClient(async (client) => {
+      await client.query("BEGIN");
+
+      try {
+        const existingEmail = await client.query<{ id: string }>(
+          "SELECT id FROM users WHERE email = $1 AND id <> $2",
+          [nextAdminEmail, session.userId]
+        );
+
+        if (existingEmail.rowCount) {
+          throw new Error("Workspace admin email is already in use.");
+        }
+
+        await client.query("UPDATE organizations SET name = $1, slug = $2 WHERE id = $3", [
+          nextOrgName,
+          nextOrgSlug,
+          session.orgId,
+        ]);
+        await client.query("UPDATE users SET email = $1 WHERE id = $2 AND org_id = $3", [
+          nextAdminEmail,
+          session.userId,
+          session.orgId,
+        ]);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    });
+
+    return;
+  }
+
+  const db = getDatabase();
+  const existingEmail = db
+    .prepare("SELECT id FROM users WHERE email = ? AND id <> ?")
+    .get(nextAdminEmail, session.userId) as { id: string } | undefined;
+
+  if (existingEmail) {
+    throw new Error("Workspace admin email is already in use.");
+  }
+
+  db.prepare("UPDATE organizations SET name = ?, slug = ? WHERE id = ?").run(
+    nextOrgName,
+    nextOrgSlug,
+    session.orgId
+  );
+  db.prepare("UPDATE users SET email = ? WHERE id = ? AND org_id = ?").run(
+    nextAdminEmail,
+    session.userId,
+    session.orgId
+  );
 }
 
 export const __testing = {

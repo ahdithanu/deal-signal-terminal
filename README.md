@@ -67,8 +67,12 @@ Build Signals now has the storage layer needed for real permit ingestion:
 - `permit_records` stores normalized raw permit rows with source-document lineage
 - `ingestion_runs` records run status, counts, failures, and timing
 - admin users can review coverage and ingestion status at `/admin/data-health`
+- admin users can run the first El Dorado normalized-source load from `/admin/data-health`
+  or by posting to `/api/admin/ingest/eldorado`
 
-The next data step is adding source-specific ingestion scripts that fetch or load permit reports and upsert normalized records into these tables.
+The current El Dorado ingest loads the normalized permit signals already represented in the
+application into the durable ingestion tables. The next data step is replacing that curated input
+with a source-specific parser that fetches or loads the county report and normalizes every row.
 
 ## Deployment
 

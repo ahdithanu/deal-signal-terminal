@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { IngestionRunButton } from "@/components/ingestion-run-button";
 import { getAuthSession } from "@/lib/auth";
 import { formatDate } from "@/lib/formatters";
 import { listDataHealthByMarket } from "@/lib/ingestion-store";
@@ -30,12 +31,17 @@ export default async function DataHealthAdminPage() {
   return (
     <div className="page-stack">
       <section className="panel">
-        <p className="eyebrow">Admin</p>
-        <h1 className="detail-title">Data health</h1>
-        <p className="tight-copy">
-          Track source coverage, raw permit volume, and ingestion run status before generated
-          opportunities depend on a broader live data pipeline.
-        </p>
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Admin</p>
+            <h1 className="detail-title">Data health</h1>
+            <p className="tight-copy">
+              Track source coverage, raw permit volume, and ingestion run status before generated
+              opportunities depend on a broader live data pipeline.
+            </p>
+          </div>
+          <IngestionRunButton />
+        </div>
       </section>
 
       <section className="metric-grid">

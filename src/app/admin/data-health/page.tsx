@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { IngestionRunButton } from "@/components/ingestion-run-button";
-import { WorkspaceIdentityButton } from "@/components/workspace-identity-button";
 import { getAuthSession } from "@/lib/auth";
 import { formatDate } from "@/lib/formatters";
 import { listDataHealthByMarket } from "@/lib/ingestion-store";
@@ -41,10 +40,7 @@ export default async function DataHealthAdminPage() {
               opportunities depend on a broader live data pipeline.
             </p>
           </div>
-          <div className="admin-action-stack">
-            <IngestionRunButton />
-            <WorkspaceIdentityButton />
-          </div>
+          <IngestionRunButton />
         </div>
       </section>
 

@@ -75,6 +75,29 @@ export type DataHealthMarket = {
   latest_run_error_message: string | null;
 };
 
+export type UpsertPermitRecordResult = {
+  id: string;
+  action: "inserted" | "updated";
+};
+
+async function findPermitRecordId(marketId: string, permitNumber: string) {
+  if (resolveDatabaseProvider() === "postgres") {
+    const result = await queryPostgres<{ id: string }>(
+      "SELECT id FROM permit_records WHERE market_id = $1 AND permit_number = $2",
+      [marketId, permitNumber]
+    );
+
+    return result.rows[0]?.id ?? null;
+  }
+
+  const db = getDatabase();
+  const row = db
+    .prepare("SELECT id FROM permit_records WHERE market_id = ? AND permit_number = ?")
+    .get(marketId, permitNumber) as { id: string } | undefined;
+
+  return row?.id ?? null;
+}
+
 export async function upsertSourceDocument(input: SourceDocumentInput) {
   const id = input.id ?? randomUUID();
   const now = new Date().toISOString();
@@ -167,8 +190,12 @@ export async function upsertSourceDocument(input: SourceDocumentInput) {
   return id;
 }
 
-export async function upsertPermitRecord(input: PermitRecordInput) {
-  const id = input.id ?? randomUUID();
+export async function upsertPermitRecord(
+  input: PermitRecordInput
+): Promise<UpsertPermitRecordResult> {
+  const existingId = await findPermitRecordId(input.marketId, input.permitNumber);
+  const id = existingId ?? input.id ?? randomUUID();
+  const action = existingId ? "updated" : "inserted";
   const now = new Date().toISOString();
   const values = [
     id,
@@ -242,7 +269,7 @@ export async function upsertPermitRecord(input: PermitRecordInput) {
         updated_at = EXCLUDED.updated_at`,
       values
     );
-    return id;
+    return { id, action };
   }
 
   const db = getDatabase();
@@ -292,7 +319,7 @@ export async function upsertPermitRecord(input: PermitRecordInput) {
       updated_at = excluded.updated_at`
   ).run(...values);
 
-  return id;
+  return { id, action };
 }
 
 export async function startIngestionRun(input: IngestionRunInput) {

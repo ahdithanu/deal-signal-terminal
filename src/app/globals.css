@@ -776,6 +776,16 @@ textarea {
   width: 100%;
 }
 
+.ingestion-runner {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.ingestion-runner .button {
+  white-space: nowrap;
+}
+
 .score-panel .button {
   background: #f4f1ea;
   color: #12181d;

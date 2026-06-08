@@ -7,7 +7,12 @@ import { applySecurityHeaders } from "@/lib/security";
 const PUBLIC_PATHS = new Set(["/login", "/demo", "/pilot", "/privacy"]);
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/auth") || pathname === "/api/health";
+  return (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/cron") ||
+    pathname === "/api/health"
+  );
 }
 
 function isProtectedApi(pathname: string): boolean {

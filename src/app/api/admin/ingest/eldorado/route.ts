@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
-import { ingestElDoradoPermitSignals } from "@/lib/ingest-eldorado";
-import { logError, logInfo } from "@/lib/observability";
+import { runElDoradoIngestion } from "@/lib/ingestion-runner";
+import { logError } from "@/lib/observability";
 
 export async function POST() {
   const session = await getAuthSession();
@@ -12,15 +12,7 @@ export async function POST() {
   }
 
   try {
-    const result = await ingestElDoradoPermitSignals();
-
-    logInfo("El Dorado ingestion completed", {
-      runId: result.runId,
-      marketId: result.marketId,
-      recordsFound: result.recordsFound,
-      recordsInserted: result.recordsInserted,
-      recordsUpdated: result.recordsUpdated,
-    });
+    const result = await runElDoradoIngestion();
 
     return NextResponse.json({
       ok: true,

@@ -40,7 +40,14 @@ export default async function DataHealthAdminPage() {
               opportunities depend on a broader live data pipeline.
             </p>
           </div>
-          <IngestionRunButton />
+          <div className="admin-action-stack">
+            <IngestionRunButton />
+            <IngestionRunButton
+              endpoint="/api/admin/ingest/sandiego"
+              label="Run San Diego ingest"
+              runningLabel="Running San Diego ingest"
+            />
+          </div>
         </div>
       </section>
 

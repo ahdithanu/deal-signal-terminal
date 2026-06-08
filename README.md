@@ -69,19 +69,21 @@ Build Signals now has the storage layer needed for real permit ingestion:
 - `permit_records` stores normalized raw permit rows with source-document lineage
 - `ingestion_runs` records run status, counts, failures, and timing
 - admin users can review coverage and ingestion status at `/admin/data-health`
-- admin users can run the first El Dorado normalized-source load from `/admin/data-health`
-  or by posting to `/api/admin/ingest/eldorado`
-- Vercel Cron runs the El Dorado ingest daily via `/api/cron/ingest/eldorado`
+- admin users can run the El Dorado normalized-source load or the San Diego development approvals
+  load from `/admin/data-health`
+- Vercel Cron runs the all-market ingest daily via `/api/cron/ingest/all`
 
 The current El Dorado ingest loads the normalized permit signals already represented in the
-application into the durable ingestion tables. The next data step is replacing that curated input
-with a source-specific parser that fetches or loads the county report and normalizes every row.
+application into the durable ingestion tables. The San Diego ingest fetches the official City of
+San Diego 2026 issued development approvals CSV, filters for higher-signal development approvals,
+and stores the top normalized records with source lineage. The next data step is turning the
+second market's raw permit records into scored opportunities.
 
 ## Deployment
 
 The app is configured for Next.js deployment on Vercel or any Node 22-compatible host.
 
-`vercel.json` schedules the El Dorado ingestion route daily at 13:00 UTC. Set `CRON_SECRET`
+`vercel.json` schedules the all-market ingestion route daily at 13:00 UTC. Set `CRON_SECRET`
 in Vercel so scheduled requests include `Authorization: Bearer <secret>`. Use the same header
 for manual operator runs without a browser session.
 

@@ -90,6 +90,33 @@ export const elDoradoWestSlopeMarket: MarketDefinition = {
   },
 };
 
+export const sanDiegoDevelopmentMarket: MarketDefinition = {
+  id: "ca-san-diego-development",
+  name: "San Diego Development Approvals",
+  geography:
+    "City of San Diego development approvals across infill, coastal, urban core, Mission Valley, University, and industrial submarkets.",
+  analysisDate: "2026-06-08",
+  sourceWindow: {
+    start: "2026-01-01",
+    end: "2026-12-31",
+  },
+  recordsScanned: 0,
+  sourcePageUrl: "https://data.sandiego.gov/datasets/development-permits/",
+  sourceDocumentUrl:
+    "https://seshat.datasd.org/development_permits/approvals_issued_2026_datasd.csv",
+  reportLabel: "City of San Diego approvals for development projects, 2026 issued approvals",
+  cityScores: {
+    "SAN DIEGO": {
+      score: 15,
+      tier: "core",
+      rationale:
+        "Large, liquid coastal and infill market with institutional demand and strong redevelopment pressure.",
+    },
+  },
+  permitTypeFrequencies: {},
+};
+
 export const markets = {
   [elDoradoWestSlopeMarket.id]: elDoradoWestSlopeMarket,
+  [sanDiegoDevelopmentMarket.id]: sanDiegoDevelopmentMarket,
 };

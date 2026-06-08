@@ -8,7 +8,17 @@ type IngestionResult = {
   recordsUpdated: number;
 };
 
-export function IngestionRunButton() {
+type IngestionRunButtonProps = {
+  endpoint?: string;
+  label?: string;
+  runningLabel?: string;
+};
+
+export function IngestionRunButton({
+  endpoint = "/api/admin/ingest/eldorado",
+  label = "Run El Dorado ingest",
+  runningLabel = "Running ingest",
+}: IngestionRunButtonProps) {
   const [status, setStatus] = useState<"idle" | "running" | "succeeded" | "failed">("idle");
   const [result, setResult] = useState<IngestionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +29,7 @@ export function IngestionRunButton() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/ingest/eldorado", {
+      const response = await fetch(endpoint, {
         method: "POST",
       });
       const payload = (await response.json()) as {
@@ -43,7 +53,7 @@ export function IngestionRunButton() {
   return (
     <div className="ingestion-runner">
       <button className="button" disabled={status === "running"} onClick={runIngestion} type="button">
-        {status === "running" ? "Running ingest" : "Run El Dorado ingest"}
+        {status === "running" ? runningLabel : label}
       </button>
       {status === "succeeded" && result ? (
         <p className="subtle-text">

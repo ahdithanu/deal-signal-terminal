@@ -130,6 +130,18 @@ function permitImpactScore(signals: PermitSignal[]): ScoreBreakdown {
         return 18;
       }
 
+      if (/rezone|grading \+ right of way|site development/i.test(signal.permitType)) {
+        return 18;
+      }
+
+      if (/encroachment agreement|building permit/i.test(signal.permitType)) {
+        return 16;
+      }
+
+      if (/construction change/i.test(signal.permitType)) {
+        return 11;
+      }
+
       if (signal.permitType === "RESIDENTIAL ACCESSORY DWELLING UNIT") {
         return 5;
       }
@@ -173,7 +185,7 @@ function scaleProxyScore(
 ): ScoreBreakdown {
   let score = 3;
   let reason =
-    "The county report does not publish square footage or valuation here, so project scale is inferred from use type and permit scope.";
+    "The source record does not always publish square footage or valuation, so project scale is inferred from use type and permit scope.";
 
   if (projectScale === "large") {
     score = 15;
@@ -199,11 +211,12 @@ function scaleProxyScore(
 }
 
 function marketScore(signals: PermitSignal[], market: MarketDefinition): ScoreBreakdown {
-  const city = signals[0]?.siteCity ?? "EL DORADO HILLS";
+  const city = signals[0]?.siteCity ?? "";
   const cityScore = market.cityScores[city] ?? {
     score: 8,
     tier: "edge",
-    rationale: "No city-specific tier available, so the market score uses a conservative default.",
+    rationale:
+      "No city-specific tier is configured for this market yet, so the score uses a conservative default until coverage is enriched.",
   };
 
   return {
@@ -235,14 +248,20 @@ function rarityScore(signals: PermitSignal[], market: MarketDefinition): ScoreBr
       const rightFreq = market.permitTypeFrequencies[right.permitType] ?? 18;
       return leftFreq - rightFreq;
     })[0];
-  const rarestFrequency = market.permitTypeFrequencies[rarestType.permitType] ?? 18;
+  const rarestFrequency = market.permitTypeFrequencies[rarestType.permitType];
+  const sourceScope = market.recordsScanned
+    ? `${market.recordsScanned.toLocaleString()}-record source set`
+    : market.reportLabel;
 
   return {
     key: "rarity",
     label: "Signal rarity",
     score,
     maxScore: 10,
-    reason: `${rarestType.permitType} appeared ${rarestFrequency} time(s) in the 174-record source week.`,
+    reason:
+      rarestFrequency == null
+        ? `${rarestType.permitType} does not have a computed frequency yet for the ${sourceScope}, so rarity uses a conservative default.`
+        : `${rarestType.permitType} appeared ${rarestFrequency} time(s) in the ${sourceScope}.`,
   };
 }
 

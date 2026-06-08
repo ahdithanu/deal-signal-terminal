@@ -2,24 +2,42 @@ import { ingestElDoradoPermitSignals } from "@/lib/ingest-eldorado";
 import { ingestSanDiegoDevelopmentApprovals } from "@/lib/ingest-sandiego";
 import { logInfo } from "@/lib/observability";
 
-export async function runElDoradoIngestion() {
-  const result = await ingestElDoradoPermitSignals();
+type IngestionRunner = {
+  marketId: string;
+  label: string;
+  run: () => Promise<{
+    runId: string;
+    marketId: string;
+    recordsFound: number;
+    recordsInserted: number;
+    recordsUpdated: number;
+    recordsScanned?: number;
+  }>;
+};
 
-  logInfo("El Dorado ingestion completed", {
-    runId: result.runId,
-    marketId: result.marketId,
-    recordsFound: result.recordsFound,
-    recordsInserted: result.recordsInserted,
-    recordsUpdated: result.recordsUpdated,
-  });
+const ingestionRunners: IngestionRunner[] = [
+  {
+    marketId: "ca-eldorado-west-slope",
+    label: "El Dorado",
+    run: ingestElDoradoPermitSignals,
+  },
+  {
+    marketId: "ca-san-diego-development",
+    label: "San Diego",
+    run: ingestSanDiegoDevelopmentApprovals,
+  },
+];
 
-  return result;
-}
+async function runMarketIngestion(marketId: string) {
+  const runner = ingestionRunners.find((candidate) => candidate.marketId === marketId);
 
-export async function runSanDiegoIngestion() {
-  const result = await ingestSanDiegoDevelopmentApprovals();
+  if (!runner) {
+    throw new Error(`No ingestion runner configured for market "${marketId}".`);
+  }
 
-  logInfo("San Diego ingestion completed", {
+  const result = await runner.run();
+
+  logInfo(`${runner.label} ingestion completed`, {
     runId: result.runId,
     marketId: result.marketId,
     recordsScanned: result.recordsScanned,
@@ -31,14 +49,21 @@ export async function runSanDiegoIngestion() {
   return result;
 }
 
+export async function runElDoradoIngestion() {
+  return runMarketIngestion("ca-eldorado-west-slope");
+}
+
+export async function runSanDiegoIngestion() {
+  return runMarketIngestion("ca-san-diego-development");
+}
+
 export async function runAllIngestions() {
-  const elDorado = await runElDoradoIngestion();
-  const sanDiego = await runSanDiegoIngestion();
+  const markets = await Promise.all(ingestionRunners.map((runner) => runMarketIngestion(runner.marketId)));
 
   return {
-    markets: [elDorado, sanDiego],
-    recordsFound: elDorado.recordsFound + sanDiego.recordsFound,
-    recordsInserted: elDorado.recordsInserted + sanDiego.recordsInserted,
-    recordsUpdated: elDorado.recordsUpdated + sanDiego.recordsUpdated,
+    markets,
+    recordsFound: markets.reduce((sum, market) => sum + market.recordsFound, 0),
+    recordsInserted: markets.reduce((sum, market) => sum + market.recordsInserted, 0),
+    recordsUpdated: markets.reduce((sum, market) => sum + market.recordsUpdated, 0),
   };
 }

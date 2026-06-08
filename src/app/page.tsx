@@ -2,12 +2,16 @@ import { redirect } from "next/navigation";
 
 import { HomeFeedExplorer } from "@/components/home-feed-explorer";
 import { SignalCard } from "@/components/signal-card";
+import { getCoverageSummary } from "@/data/coverage";
 import { getAuthSession } from "@/lib/auth";
 import { homeFeedOpportunities, opportunities, getMarketById } from "@/lib/opportunities";
 
 const homeFeed = homeFeedOpportunities.slice(0, 3);
 const rankedExplorerFeed = opportunities;
-const market = getMarketById("ca-eldorado-west-slope");
+const activeMarketIds = Array.from(new Set(rankedExplorerFeed.map((opportunity) => opportunity.marketId)));
+const activeMarkets = activeMarketIds.map(getMarketById);
+const recordsScanned = activeMarkets.reduce((sum, market) => sum + market.recordsScanned, 0);
+const coverageSummary = getCoverageSummary();
 
 export default async function HomePage({
   searchParams,
@@ -37,8 +41,9 @@ export default async function HomePage({
           <p className="eyebrow">Developer-grade public-record intelligence</p>
           <h1 className="hero-title">See site motion before it turns into a marketed deal.</h1>
           <p className="hero-copy hero-copy-strong">
-            Build Signals turns weekly permit noise into a short development queue with
-            real parcel context, ranked urgency, and an explicit next move for acquisitions teams.
+            Build Signals turns permit and approval noise across launch markets into a short
+            development queue with real parcel context, ranked urgency, and an explicit next move
+            for acquisitions teams.
           </p>
 
           <div className="hero-action-row">
@@ -63,26 +68,31 @@ export default async function HomePage({
           <div className="hero-stat-strip">
             <div className="hero-stat">
               <span className="hero-stat-label">Signals scanned</span>
-              <strong>{market.recordsScanned}</strong>
+              <strong>{recordsScanned.toLocaleString()}</strong>
             </div>
             <div className="hero-stat">
               <span className="hero-stat-label">Ranked opportunities</span>
               <strong>{opportunities.length}</strong>
             </div>
             <div className="hero-stat">
-              <span className="hero-stat-label">Developer queue</span>
-              <strong>{rankedExplorerFeed.length}</strong>
+              <span className="hero-stat-label">Markets live</span>
+              <strong>{coverageSummary.live}</strong>
+            </div>
+            <div className="hero-stat">
+              <span className="hero-stat-label">Expansion queue</span>
+              <strong>{coverageSummary.queued + coverageSummary.evaluating}</strong>
             </div>
           </div>
         </div>
 
         <div className="hero-side-stack">
           <div className="hero-side-panel hero-side-panel-dark">
-            <p className="eyebrow eyebrow-inverse">Launch market</p>
-            <h2 className="hero-side-title">El Dorado County West Slope</h2>
+            <p className="eyebrow eyebrow-inverse">Launch markets</p>
+            <h2 className="hero-side-title">El Dorado + San Diego</h2>
             <p className="hero-side-copy">
-              Public county permit activity from March 16, 2026 through March 22, 2026, filtered
-              for large-scale developers instead of homeowner or maintenance noise.
+              County permit activity and city development approvals are normalized into one ranked
+              acquisitions workflow, with a source registry now structured for nationwide market
+              expansion.
             </p>
           </div>
 

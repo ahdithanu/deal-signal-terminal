@@ -246,7 +246,7 @@ export function HomeFeedExplorer({ opportunities }: HomeFeedExplorerProps) {
         <div className="section-header panel-header">
           <div>
             <p className="eyebrow">Explorer</p>
-            <h3 className="section-title">Browse the full ranked launch-market set</h3>
+            <h3 className="section-title">Browse the full ranked multi-market set</h3>
           </div>
           <div className="subtle-text feed-heading-meta">
             {visibleOpportunities.length} shown of {opportunities.length} ranked opportunities

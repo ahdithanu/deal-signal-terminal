@@ -98,13 +98,14 @@ export const sanDiegoDevelopmentMarket: MarketDefinition = {
   analysisDate: "2026-06-08",
   sourceWindow: {
     start: "2026-01-01",
-    end: "2026-12-31",
+    end: "2026-06-08",
   },
-  recordsScanned: 0,
+  recordsScanned: 22611,
   sourcePageUrl: "https://data.sandiego.gov/datasets/development-permits/",
   sourceDocumentUrl:
     "https://seshat.datasd.org/development_permits/approvals_issued_2026_datasd.csv",
-  reportLabel: "City of San Diego approvals for development projects, 2026 issued approvals",
+  reportLabel:
+    "City of San Diego approvals for development projects, 2026 issued approvals accessed June 8, 2026",
   cityScores: {
     "SAN DIEGO": {
       score: 15,

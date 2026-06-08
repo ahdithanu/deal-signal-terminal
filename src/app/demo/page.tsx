@@ -42,15 +42,16 @@ export default async function DemoPage() {
             <p className="eyebrow">Live product demo</p>
             <h1 className="hero-title">Help acquisitions teams see meaningful development signals before the market does.</h1>
             <p className="hero-copy hero-copy-strong">
-              Build Signals turns fragmented public permit activity into a ranked sourcing pipeline
-              with parcel context, investment framing, and a memo-ready next move.
+              Build Signals turns fragmented public permit and approval activity into a ranked
+              sourcing pipeline with parcel context, investment framing, and a memo-ready next move.
             </p>
 
             <div className="hero-callout demo-run-callout">
               <strong>Why teams care</strong>
               <span>
                 The goal is simple: reduce sourcing noise, identify projects earlier, and help a
-                team move from raw permit motion to a usable pipeline view in minutes.
+                team move from raw public-record motion to a usable pipeline view in minutes,
+                with a source model designed to expand market by market.
               </span>
             </div>
           </div>
@@ -83,6 +84,7 @@ export default async function DemoPage() {
             <ol className="demo-steps">
               <li>Open the seeded workspace.</li>
               <li>Review the top-ranked opportunity.</li>
+              <li>Use filters and AI questions across the ranked set.</li>
               <li>Open the IC memo draft.</li>
               <li>Finish on the watchlist intelligence view.</li>
             </ol>
@@ -135,7 +137,7 @@ export default async function DemoPage() {
             <h2 className="section-title">Ask Build Signals what matters in this launch market</h2>
             <p className="tight-copy">
               Inside the workspace, these guided prompts update against the visible ranked set so
-              you can move from raw permit motion to a usable market read faster.
+              you can move from raw permit and approval motion to a usable market read faster.
             </p>
 
             <div className="chip-row">
@@ -214,8 +216,8 @@ export default async function DemoPage() {
             <h2 className="section-title">Take it from live demo to founder-led pilot</h2>
             <p className="tight-copy">
               If this workflow fits your sourcing process, the next step is a narrow pilot: one
-              launch market, one real team, weekly feedback loops, and a clear path to a more
-              enterprise-ready deployment.
+              first coverage set, one real team, weekly feedback loops, and a clear path to a
+              nationwide-ready deployment.
             </p>
             <div className="hero-action-row">
               <Link className="button" href="/pilot">

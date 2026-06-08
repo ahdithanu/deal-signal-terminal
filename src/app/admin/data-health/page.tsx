@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { IngestionRunButton } from "@/components/ingestion-run-button";
+import { coverageSourceLabels, getCoverageSummary, marketCoverage } from "@/data/coverage";
 import { getAuthSession } from "@/lib/auth";
 import { formatDate } from "@/lib/formatters";
 import { listDataHealthByMarket } from "@/lib/ingestion-store";
@@ -20,9 +21,10 @@ export default async function DataHealthAdminPage() {
     redirect("/");
   }
 
-  const markets = await listDataHealthByMarket();
-  const totalRecords = markets.reduce((sum, market) => sum + market.permit_records, 0);
-  const latestAccessedAt = markets
+  const observedMarkets = await listDataHealthByMarket();
+  const coverageSummary = getCoverageSummary();
+  const totalRecords = observedMarkets.reduce((sum, market) => sum + market.permit_records, 0);
+  const latestAccessedAt = observedMarkets
     .map((market) => market.latest_accessed_at)
     .filter((value): value is string => Boolean(value))
     .sort()
@@ -36,8 +38,8 @@ export default async function DataHealthAdminPage() {
             <p className="eyebrow">Admin</p>
             <h1 className="detail-title">Data health</h1>
             <p className="tight-copy">
-              Track source coverage, raw permit volume, and ingestion run status before generated
-              opportunities depend on a broader live data pipeline.
+              Track configured coverage, observed raw permit volume, and ingestion status before
+              generated opportunities depend on a broader nationwide data pipeline.
             </p>
           </div>
           <div className="admin-action-stack">
@@ -54,8 +56,8 @@ export default async function DataHealthAdminPage() {
       <section className="metric-grid">
         <div className="panel">
           <p className="eyebrow">Markets</p>
-          <strong className="metric-value">{markets.length}</strong>
-          <p className="subtle-text">with source or ingestion activity</p>
+          <strong className="metric-value">{coverageSummary.live}</strong>
+          <p className="subtle-text">live configured markets</p>
         </div>
         <div className="panel">
           <p className="eyebrow">Raw records</p>
@@ -75,12 +77,67 @@ export default async function DataHealthAdminPage() {
         <div className="section-header">
           <div>
             <p className="eyebrow">Coverage</p>
-            <h2 className="section-title">Launch-market data backbone</h2>
+            <h2 className="section-title">Nationwide expansion registry</h2>
+            <p className="tight-copy">
+              Live markets power the current product. Queued and evaluating markets are expansion
+              targets that still need source validation before they can generate opportunities.
+            </p>
           </div>
-          <div className="subtle-text">{markets.length} markets</div>
+          <div className="subtle-text">
+            {coverageSummary.total} configured · {coverageSummary.queued} queued ·{" "}
+            {coverageSummary.evaluating} evaluating
+          </div>
         </div>
 
-        {markets.length === 0 ? (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>Status</th>
+              <th>Source families</th>
+              <th>Why next</th>
+              <th>Next step</th>
+            </tr>
+          </thead>
+          <tbody>
+            {marketCoverage.map((market) => (
+              <tr key={market.id}>
+                <td>
+                  <strong>{market.name}</strong>
+                  <div className="table-subtext">{market.region}</div>
+                </td>
+                <td>
+                  <span className={market.status === "live" ? "chip chip-accent" : "chip"}>
+                    {market.status}
+                  </span>
+                </td>
+                <td>
+                  {market.sourceFamilies
+                    .map((sourceFamily) => coverageSourceLabels[sourceFamily])
+                    .join(", ")}
+                </td>
+                <td>{market.reason}</td>
+                <td>{market.nextStep}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="panel">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Observed data</p>
+            <h2 className="section-title">Stored source and ingestion health</h2>
+            <p className="tight-copy">
+              This table only reflects markets with stored source documents, raw records, or
+              ingestion runs. It is not the same thing as total configured expansion coverage.
+            </p>
+          </div>
+          <div className="subtle-text">{observedMarkets.length} markets with stored activity</div>
+        </div>
+
+        {observedMarkets.length === 0 ? (
           <div className="empty-state empty-state-inline">
             <p className="tight-copy">
               No source documents, raw permit records, or ingestion runs have been stored yet.
@@ -99,7 +156,7 @@ export default async function DataHealthAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {markets.map((market) => (
+              {observedMarkets.map((market) => (
                 <tr key={market.market_id}>
                   <td>
                     <strong>{market.market_id}</strong>

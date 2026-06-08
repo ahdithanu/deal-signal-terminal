@@ -1,5 +1,5 @@
-import { rawPermitSignals, opportunitySeeds } from "@/data/eldorado-west-slope";
 import { markets } from "@/data/markets";
+import { opportunitySourceBatches } from "@/data/opportunity-sources";
 import {
   formatCity,
   formatDate,
@@ -112,9 +112,13 @@ function buildTimeline(signals: PermitSignal[]): PermitTimelineEntry[] {
   });
 }
 
-function deriveOpportunity(seed: OpportunitySeed, market: MarketDefinition): Opportunity {
+function deriveOpportunity(
+  seed: OpportunitySeed,
+  market: MarketDefinition,
+  signalPool: PermitSignal[]
+): Opportunity {
   const signals = seed.signalIds
-    .map((signalId) => rawPermitSignals.find((signal) => signal.id === signalId))
+    .map((signalId) => signalPool.find((signal) => signal.id === signalId))
     .filter((signal): signal is PermitSignal => Boolean(signal));
 
   if (signals.length === 0) {
@@ -212,7 +216,9 @@ function buildLocalContext(opportunity: Opportunity, pool: Opportunity[]): {
   }
 
   const city = opportunity.signals[0]?.siteCity;
-  const related = pool.filter((candidate) => candidate.id !== opportunity.id);
+  const related = pool.filter(
+    (candidate) => candidate.id !== opportunity.id && candidate.marketId === opportunity.marketId
+  );
   const sameCityWeight = related
     .filter((candidate) => candidate.signals[0]?.siteCity === city)
     .reduce((sum, candidate) => sum + clusterSignalWeight(candidate), 0);
@@ -343,17 +349,19 @@ function buildParcelNextStepSentence(opportunity: Opportunity): string {
     .join(", ")}.`;
 }
 
-const derivedOpportunities = opportunitySeeds
-  .map((seed) => {
-    try {
-      return deriveOpportunity(seed, markets["ca-eldorado-west-slope"]);
-    } catch (error) {
-      console.warn(
-        error instanceof Error ? error.message : `Failed to derive opportunity for ${seed.id}.`
-      );
-      return null;
-    }
-  })
+const derivedOpportunities = opportunitySourceBatches
+  .flatMap((batch) =>
+    batch.seeds.map((seed) => {
+      try {
+        return deriveOpportunity(seed, batch.market, batch.signals);
+      } catch (error) {
+        console.warn(
+          error instanceof Error ? error.message : `Failed to derive opportunity for ${seed.id}.`
+        );
+        return null;
+      }
+    })
+  )
   .filter((opportunity): opportunity is Opportunity => Boolean(opportunity))
   .sort((left, right) => right.priorityScore - left.priorityScore);
 
@@ -434,5 +442,11 @@ export function getOpportunityBySlug(slug: string): Opportunity | undefined {
 }
 
 export function getMarketById(marketId: string): MarketDefinition {
-  return markets[marketId];
+  const market = markets[marketId];
+
+  if (!market) {
+    throw new Error(`Unknown market id "${marketId}".`);
+  }
+
+  return market;
 }

@@ -36,7 +36,7 @@ export default async function RootLayout({
 
                 <div className="nav-block">
                   <div className="status-pill">
-                    {session ? `${session.orgName} · ${session.role}` : "Launch market: El Dorado County West Slope"}
+                    {session ? `${session.orgName} · ${session.role}` : "Live markets: El Dorado + San Diego"}
                   </div>
                   <nav className="nav-links">
                     {session ? (

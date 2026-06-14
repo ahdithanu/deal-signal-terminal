@@ -58,7 +58,7 @@ export default async function LoginPage() {
               <h2 className="login-guide-title">Start with the pilot path</h2>
               <p className="tight-copy">
                 If the workflow looks relevant to your team, the next step is a narrow founder-led
-                pilot in the launch market before broader rollout.
+                pilot in the first coverage set before broader rollout.
               </p>
               <a className="button button-secondary" href="/pilot">
                 See pilot details

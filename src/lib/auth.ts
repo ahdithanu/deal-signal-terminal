@@ -79,7 +79,6 @@ const DEMO_SESSION_TOKEN = "build-signals-demo-session";
 function getBootstrapConfig() {
   const email =
     process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||
-    process.env.DST_BOOTSTRAP_EMAIL?.trim() ||
     "admin@buildsignals.local";
   const password =
     process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD?.trim() ||
@@ -87,11 +86,9 @@ function getBootstrapConfig() {
     "change-me-now";
   const orgName =
     process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME?.trim() ||
-    process.env.DST_BOOTSTRAP_ORG_NAME?.trim() ||
     "Build Signals";
   const orgSlug =
     process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG?.trim() ||
-    process.env.DST_BOOTSTRAP_ORG_SLUG?.trim() ||
     "build-signals";
 
   return {

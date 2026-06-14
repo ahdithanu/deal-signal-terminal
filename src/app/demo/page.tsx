@@ -134,7 +134,7 @@ export default async function DemoPage() {
 
           <div className="panel feed-analysis-panel">
             <p className="eyebrow">AI insights preview</p>
-            <h2 className="section-title">Ask Build Signals what matters in this launch market</h2>
+            <h2 className="section-title">Ask Build Signals what matters across the live set</h2>
             <p className="tight-copy">
               Inside the workspace, these guided prompts update against the visible ranked set so
               you can move from raw permit and approval motion to a usable market read faster.
@@ -256,9 +256,9 @@ export default async function DemoPage() {
             <p className="eyebrow">Source discipline</p>
             <h3 className="section-title">No invented facts</h3>
             <p className="tight-copy">
-              The launch market is grounded in the El Dorado County permit activity report for
-              March 16-22, 2026, accessed on March 26, 2026, then enriched with dated parcel
-              context rather than undocumented assumptions.
+              The live coverage set is grounded in official El Dorado County permit activity and
+              City of San Diego development approvals, then enriched with dated parcel context
+              where available rather than undocumented assumptions.
             </p>
             <ul className="plain-list">
               <li>Scores are rules-based and transparent.</li>

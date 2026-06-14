@@ -26,7 +26,7 @@ export default async function PilotPage() {
             <strong>Best fit right now</strong>
             <span>
               Small and mid-sized acquisitions or development teams that want a focused pilot in a
-              curated launch market before broader rollout.
+              curated first coverage set before broader rollout.
             </span>
           </div>
 
@@ -43,9 +43,9 @@ export default async function PilotPage() {
         <div className="hero-side-stack">
           <div className="hero-side-panel hero-side-panel-dark">
             <p className="eyebrow eyebrow-inverse">What a pilot includes</p>
-            <h2 className="hero-side-title">One market, one workflow, one accountable partner</h2>
+            <h2 className="hero-side-title">One coverage set, one workflow, one accountable partner</h2>
             <p className="hero-side-copy">
-              The current pilot is intentionally narrow: one launch market, founder-led setup,
+              The current pilot is intentionally narrow: one live coverage set, founder-led setup,
               weekly feedback loops, and rapid iteration around a real sourcing workflow.
             </p>
           </div>
@@ -86,7 +86,7 @@ export default async function PilotPage() {
           <p className="eyebrow">Pilot scope</p>
           <h2 className="section-title">What you get in the first engagement</h2>
           <ul className="plain-list">
-            <li>Ranked permit-driven opportunities in the El Dorado County West Slope launch market.</li>
+            <li>Ranked permit and approval-driven opportunities across the first live coverage set.</li>
             <li>Parcel context, source discipline, watchlist tracking, memo generation, and AI-powered Q&amp;A.</li>
             <li>Founder-led onboarding and weekly product feedback loops.</li>
             <li>A practical path from pilot validation to broader deployment and infrastructure hardening.</li>

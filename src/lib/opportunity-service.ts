@@ -9,6 +9,20 @@ import {
 } from "@/lib/opportunities";
 import type { Opportunity, PermitSignal } from "@/types/domain";
 
+export type GeneratedOpportunityHealthMarket = {
+  marketId: string;
+  generatedSignals: number;
+  generatedSeeds: number;
+  generatedOpportunities: number;
+  surfacedOpportunities: number;
+  topOpportunity: {
+    slug: string;
+    title: string;
+    priorityScore: number;
+    priorityBand: string;
+  } | null;
+};
+
 function permitKey(signal: PermitSignal) {
   return `${signal.marketId}:${signal.permitNumber}`;
 }
@@ -59,4 +73,42 @@ export async function getOpportunityBySlugWithGenerated(
   const liveOpportunities = await getOpportunities();
 
   return liveOpportunities.find((opportunity) => opportunity.slug === slug);
+}
+
+export async function listGeneratedOpportunityHealth(): Promise<GeneratedOpportunityHealthMarket[]> {
+  const generatedBatches = withoutCuratedPermitDuplicates(
+    await buildGeneratedOpportunitySourceBatches()
+  );
+
+  if (generatedBatches.length === 0) {
+    return [];
+  }
+
+  const generatedOpportunities = buildOpportunitiesFromBatches(generatedBatches);
+
+  return generatedBatches
+    .map((batch) => {
+      const marketOpportunities = generatedOpportunities.filter(
+        (opportunity) => opportunity.marketId === batch.market.id
+      );
+      const surfacedOpportunities = marketOpportunities.filter(shouldSurfaceInHomeFeed);
+      const topOpportunity = marketOpportunities[0];
+
+      return {
+        marketId: batch.market.id,
+        generatedSignals: batch.signals.length,
+        generatedSeeds: batch.seeds.length,
+        generatedOpportunities: marketOpportunities.length,
+        surfacedOpportunities: surfacedOpportunities.length,
+        topOpportunity: topOpportunity
+          ? {
+              slug: topOpportunity.slug,
+              title: topOpportunity.projectName ?? topOpportunity.title,
+              priorityScore: topOpportunity.priorityScore,
+              priorityBand: topOpportunity.priorityBand,
+            }
+          : null,
+      };
+    })
+    .sort((left, right) => right.generatedOpportunities - left.generatedOpportunities);
 }

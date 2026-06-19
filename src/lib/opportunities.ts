@@ -1,5 +1,5 @@
 import { markets } from "@/data/markets";
-import { opportunitySourceBatches } from "@/data/opportunity-sources";
+import { opportunitySourceBatches, type OpportunitySourceBatch } from "@/data/opportunity-sources";
 import {
   formatCity,
   formatDate,
@@ -349,38 +349,42 @@ function buildParcelNextStepSentence(opportunity: Opportunity): string {
     .join(", ")}.`;
 }
 
-const derivedOpportunities = opportunitySourceBatches
-  .flatMap((batch) =>
-    batch.seeds.map((seed) => {
-      try {
-        return deriveOpportunity(seed, batch.market, batch.signals);
-      } catch (error) {
-        console.warn(
-          error instanceof Error ? error.message : `Failed to derive opportunity for ${seed.id}.`
-        );
-        return null;
-      }
-    })
-  )
-  .filter((opportunity): opportunity is Opportunity => Boolean(opportunity))
-  .sort((left, right) => right.priorityScore - left.priorityScore);
+export function buildOpportunitiesFromBatches(batches: OpportunitySourceBatch[]) {
+  const derivedOpportunities = batches
+    .flatMap((batch) =>
+      batch.seeds.map((seed) => {
+        try {
+          return deriveOpportunity(seed, batch.market, batch.signals);
+        } catch (error) {
+          console.warn(
+            error instanceof Error ? error.message : `Failed to derive opportunity for ${seed.id}.`
+          );
+          return null;
+        }
+      })
+    )
+    .filter((opportunity): opportunity is Opportunity => Boolean(opportunity))
+    .sort((left, right) => right.priorityScore - left.priorityScore);
 
-const patternRelevantOpportunities = derivedOpportunities.filter(
-  (opportunity) => clusterSignalWeight(opportunity) > 0
-);
+  const patternRelevantOpportunities = derivedOpportunities.filter(
+    (opportunity) => clusterSignalWeight(opportunity) > 0
+  );
 
-export const opportunities = derivedOpportunities.map((opportunity) => {
-  const localPattern = buildLocalContext(opportunity, patternRelevantOpportunities);
-  const parcelRead = buildParcelWhyItMattersSentence(opportunity);
-  const parcelNextStep = buildParcelNextStepSentence(opportunity);
+  return derivedOpportunities.map((opportunity) => {
+    const localPattern = buildLocalContext(opportunity, patternRelevantOpportunities);
+    const parcelRead = buildParcelWhyItMattersSentence(opportunity);
+    const parcelNextStep = buildParcelNextStepSentence(opportunity);
 
-  return {
-    ...opportunity,
-    localContext: localPattern.localContext,
-    whyItMatters: `${opportunity.whyItMatters} ${parcelRead} ${localPattern.contextSentence}`,
-    nextStep: `${opportunity.nextStep} ${parcelNextStep}`,
-  };
-});
+    return {
+      ...opportunity,
+      localContext: localPattern.localContext,
+      whyItMatters: `${opportunity.whyItMatters} ${parcelRead} ${localPattern.contextSentence}`,
+      nextStep: `${opportunity.nextStep} ${parcelNextStep}`,
+    };
+  });
+}
+
+export const opportunities = buildOpportunitiesFromBatches(opportunitySourceBatches);
 
 export function getFeedCategory(opportunity: Opportunity): FeedCategory {
   if (

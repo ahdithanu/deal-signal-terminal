@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 
 import { WatchlistPageClient } from "@/components/watchlist-page-client";
 import { getAuthSession } from "@/lib/auth";
-import { opportunities } from "@/lib/opportunities";
+import { getOpportunities } from "@/lib/opportunity-service";
+
+export const dynamic = "force-dynamic";
 
 export default async function WatchlistPage({
   searchParams,
@@ -16,6 +18,8 @@ export default async function WatchlistPage({
   if (!session) {
     redirect("/login");
   }
+
+  const opportunities = await getOpportunities();
 
   return (
     <div className="page-stack">

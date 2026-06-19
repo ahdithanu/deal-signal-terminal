@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 
 import { getAuthSession, getDemoWorkspaceCredentials } from "@/lib/auth";
 import { formatOpportunityType } from "@/lib/formatters";
-import { opportunities } from "@/lib/opportunities";
+import { getOpportunities } from "@/lib/opportunity-service";
+
+export const dynamic = "force-dynamic";
 
 export default async function DemoPage() {
   const session = await getAuthSession();
   const demoCredentials = getDemoWorkspaceCredentials();
+  const opportunities = await getOpportunities();
   const mostInstitutional = opportunities
     .filter((opportunity) => opportunity.projectScale !== "small")
     .slice(0, 3);

@@ -6,7 +6,7 @@ import { MemoPrintButton } from "@/components/memo-print-button";
 import { generateOpportunityMemo } from "@/lib/ai";
 import { getAuthSession } from "@/lib/auth";
 import { formatConfidenceLevel, formatDate, formatOpportunityType } from "@/lib/formatters";
-import { getOpportunityBySlug } from "@/lib/opportunities";
+import { getOpportunityBySlugWithGenerated } from "@/lib/opportunity-service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export default async function MemoPage({
     redirect("/login");
   }
   const { slug } = await params;
-  const opportunity = getOpportunityBySlug(slug);
+  const opportunity = await getOpportunityBySlugWithGenerated(slug);
 
   if (!opportunity) {
     notFound();

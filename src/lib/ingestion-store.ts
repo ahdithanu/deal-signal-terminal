@@ -80,6 +80,37 @@ export type UpsertPermitRecordResult = {
   action: "inserted" | "updated";
 };
 
+export type StoredPermitRecord = {
+  id: string;
+  source_document_id: string;
+  market_id: string;
+  jurisdiction: string;
+  permit_number: string;
+  permit_type: string;
+  permit_subtype: string | null;
+  status: string | null;
+  applied_date: string | null;
+  issued_date: string | null;
+  finaled_date: string | null;
+  address: string | null;
+  city: string | null;
+  parcel_number: string | null;
+  applicant: string | null;
+  contractor: string | null;
+  valuation: number | null;
+  description: string;
+  raw_json: string | null;
+  content_hash: string;
+  created_at: string;
+  updated_at: string;
+  source_name: string;
+  source_url: string;
+  document_url: string;
+  report_label: string;
+  published_at: string | null;
+  accessed_at: string;
+};
+
 async function findPermitRecordId(marketId: string, permitNumber: string) {
   if (resolveDatabaseProvider() === "postgres") {
     const result = await queryPostgres<{ id: string }>(
@@ -520,4 +551,92 @@ export async function listDataHealthByMarket(): Promise<DataHealthMarket[]> {
       ORDER BY markets.market_id`
     )
     .all() as DataHealthMarket[];
+}
+
+export async function listRecentPermitRecords(limit = 100): Promise<StoredPermitRecord[]> {
+  if (resolveDatabaseProvider() === "postgres") {
+    const result = await queryPostgres<StoredPermitRecord>(
+      `SELECT
+        records.id,
+        records.source_document_id,
+        records.market_id,
+        records.jurisdiction,
+        records.permit_number,
+        records.permit_type,
+        records.permit_subtype,
+        records.status,
+        records.applied_date,
+        records.issued_date,
+        records.finaled_date,
+        records.address,
+        records.city,
+        records.parcel_number,
+        records.applicant,
+        records.contractor,
+        records.valuation,
+        records.description,
+        records.raw_json,
+        records.content_hash,
+        records.created_at,
+        records.updated_at,
+        documents.source_name,
+        documents.source_url,
+        documents.document_url,
+        documents.report_label,
+        documents.published_at,
+        documents.accessed_at
+      FROM permit_records records
+      INNER JOIN source_documents documents ON documents.id = records.source_document_id
+      ORDER BY
+        COALESCE(records.issued_date, records.applied_date, records.updated_at) DESC,
+        COALESCE(records.valuation, 0) DESC,
+        records.updated_at DESC
+      LIMIT $1`,
+      [limit]
+    );
+
+    return result.rows;
+  }
+
+  const db = getDatabase();
+  return db
+    .prepare(
+      `SELECT
+        records.id,
+        records.source_document_id,
+        records.market_id,
+        records.jurisdiction,
+        records.permit_number,
+        records.permit_type,
+        records.permit_subtype,
+        records.status,
+        records.applied_date,
+        records.issued_date,
+        records.finaled_date,
+        records.address,
+        records.city,
+        records.parcel_number,
+        records.applicant,
+        records.contractor,
+        records.valuation,
+        records.description,
+        records.raw_json,
+        records.content_hash,
+        records.created_at,
+        records.updated_at,
+        documents.source_name,
+        documents.source_url,
+        documents.document_url,
+        documents.report_label,
+        documents.published_at,
+        documents.accessed_at
+      FROM permit_records records
+      INNER JOIN source_documents documents ON documents.id = records.source_document_id
+      ORDER BY
+        COALESCE(records.issued_date, records.applied_date, records.updated_at) DESC,
+        COALESCE(records.valuation, 0) DESC,
+        records.updated_at DESC
+      LIMIT ?`
+    )
+    .all(limit) as StoredPermitRecord[];
 }

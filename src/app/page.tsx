@@ -4,14 +4,15 @@ import { HomeFeedExplorer } from "@/components/home-feed-explorer";
 import { SignalCard } from "@/components/signal-card";
 import { getCoverageSummary } from "@/data/coverage";
 import { getAuthSession } from "@/lib/auth";
-import { homeFeedOpportunities, opportunities, getMarketById } from "@/lib/opportunities";
+import { getOpportunities } from "@/lib/opportunity-service";
+import {
+  shouldSurfaceInHomeFeed,
+  getMarketById,
+} from "@/lib/opportunities";
 
-const homeFeed = homeFeedOpportunities.slice(0, 3);
-const rankedExplorerFeed = opportunities;
-const activeMarketIds = Array.from(new Set(rankedExplorerFeed.map((opportunity) => opportunity.marketId)));
-const activeMarkets = activeMarketIds.map(getMarketById);
-const recordsScanned = activeMarkets.reduce((sum, market) => sum + market.recordsScanned, 0);
 const coverageSummary = getCoverageSummary();
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage({
   searchParams,
@@ -19,13 +20,21 @@ export default async function HomePage({
   searchParams?: Promise<{ demo?: string }>;
 }) {
   const session = await getAuthSession();
-  const featuredOpportunity = homeFeed[0];
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const isDemoRun = resolvedSearchParams?.demo === "1";
 
   if (!session) {
     redirect("/login");
   }
+
+  const rankedExplorerFeed = await getOpportunities();
+  const homeFeed = rankedExplorerFeed.filter(shouldSurfaceInHomeFeed).slice(0, 3);
+  const activeMarketIds = Array.from(
+    new Set(rankedExplorerFeed.map((opportunity) => opportunity.marketId))
+  );
+  const activeMarkets = activeMarketIds.map(getMarketById);
+  const recordsScanned = activeMarkets.reduce((sum, market) => sum + market.recordsScanned, 0);
+  const featuredOpportunity = homeFeed[0];
 
   const opportunityMix = {
     development: rankedExplorerFeed.filter((item) => item.opportunityType === "development").length,
@@ -72,7 +81,7 @@ export default async function HomePage({
             </div>
             <div className="hero-stat">
               <span className="hero-stat-label">Ranked opportunities</span>
-              <strong>{opportunities.length}</strong>
+              <strong>{rankedExplorerFeed.length}</strong>
             </div>
             <div className="hero-stat">
               <span className="hero-stat-label">Markets live</span>

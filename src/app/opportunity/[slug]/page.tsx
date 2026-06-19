@@ -21,7 +21,9 @@ import {
   formatProjectScale,
   formatSignalType,
 } from "@/lib/formatters";
-import { getOpportunityBySlug } from "@/lib/opportunities";
+import { getOpportunityBySlugWithGenerated } from "@/lib/opportunity-service";
+
+export const dynamic = "force-dynamic";
 
 export default async function OpportunityDetailPage({
   params,
@@ -38,7 +40,7 @@ export default async function OpportunityDetailPage({
     redirect("/login");
   }
   const { slug } = await params;
-  const opportunity = getOpportunityBySlug(slug);
+  const opportunity = await getOpportunityBySlugWithGenerated(slug);
 
   if (!opportunity) {
     notFound();

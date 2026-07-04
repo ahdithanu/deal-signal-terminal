@@ -1551,6 +1551,91 @@ textarea {
   color: var(--ink);
 }
 
+.copilot-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.copilot-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 18px;
+}
+
+.copilot-thread,
+.copilot-citations,
+.copilot-citation-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.copilot-message {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+  cursor: pointer;
+}
+
+.copilot-message-active {
+  border-color: rgba(34, 92, 66, 0.42);
+  background: rgba(232, 241, 236, 0.84);
+}
+
+.copilot-message span,
+.copilot-message strong,
+.copilot-message small {
+  display: block;
+}
+
+.copilot-message strong {
+  margin-top: 0.3rem;
+  text-transform: capitalize;
+}
+
+.copilot-message p {
+  margin: 0.65rem 0;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.copilot-message small {
+  color: var(--muted);
+}
+
+.copilot-citation-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.copilot-citation-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.copilot-citation-header span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.copilot-citation-card p {
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.copilot-next-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
 @media (max-width: 1100px) {
   .hero,
   .two-column,
@@ -1628,7 +1713,8 @@ textarea {
   .research-agent-grid,
   .timeline-row,
   .settings-grid,
-  .form-grid {
+  .form-grid,
+  .copilot-layout {
     grid-template-columns: 1fr;
   }
 

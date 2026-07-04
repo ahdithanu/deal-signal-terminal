@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { CopilotPanel } from "@/components/copilot-panel";
 import { HomeFeedExplorer } from "@/components/home-feed-explorer";
 import { SignalCard } from "@/components/signal-card";
 import { getCoverageSummary } from "@/data/coverage";
@@ -135,6 +136,10 @@ export default async function HomePage({
           </div>
 
           <HomeFeedExplorer opportunities={rankedExplorerFeed} />
+          <CopilotPanel
+            title="Ask across the ranked opportunity set"
+            visibleOpportunitySlugs={rankedExplorerFeed.map((opportunity) => opportunity.slug)}
+          />
         </div>
 
         <div className="sidebar-stack">

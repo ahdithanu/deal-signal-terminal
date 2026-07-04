@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { CopilotPanel } from "@/components/copilot-panel";
 import { NotesPanel } from "@/components/notes-panel";
 import { OpportunityGraphPanel } from "@/components/opportunity-graph-panel";
 import { OpportunityResearchPanel } from "@/components/opportunity-research-panel";
@@ -181,6 +182,11 @@ export default async function OpportunityDetailPage({
           </div>
 
           <OpportunityResearchPanel slug={opportunity.slug} />
+
+          <CopilotPanel
+            opportunitySlug={opportunity.slug}
+            title={`Ask Copilot about ${primaryTitle}`}
+          />
 
           <ReviewWorkflowPanel slug={opportunity.slug} opportunityId={opportunity.id} />
 

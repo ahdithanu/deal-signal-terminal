@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { NotesPanel } from "@/components/notes-panel";
 import { OpportunityGraphPanel } from "@/components/opportunity-graph-panel";
+import { OpportunityResearchPanel } from "@/components/opportunity-research-panel";
 import { ScoreBreakdown } from "@/components/score-breakdown";
 import { WatchlistToggle } from "@/components/watchlist-toggle";
 import { buildOpportunitySummary } from "@/lib/ai";
@@ -177,6 +178,8 @@ export default async function OpportunityDetailPage({
               )}
             </div>
           </div>
+
+          <OpportunityResearchPanel slug={opportunity.slug} />
 
           <div className="panel">
             <div className="section-header">

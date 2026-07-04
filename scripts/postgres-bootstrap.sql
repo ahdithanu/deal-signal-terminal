@@ -183,3 +183,42 @@ CREATE TABLE IF NOT EXISTS graph_relationship_evidence (
 
 CREATE INDEX IF NOT EXISTS graph_relationship_evidence_relationship_idx
   ON graph_relationship_evidence (relationship_id);
+
+CREATE TABLE IF NOT EXISTS agent_research_runs (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT NOT NULL,
+  opportunity_slug TEXT NOT NULL,
+  status TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt_version TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  total_prompt_tokens INTEGER NOT NULL DEFAULT 0,
+  total_completion_tokens INTEGER NOT NULL DEFAULT 0,
+  total_latency_ms INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  final_output_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS agent_research_runs_opportunity_idx
+  ON agent_research_runs (opportunity_id, started_at);
+
+CREATE TABLE IF NOT EXISTS agent_research_outputs (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL REFERENCES agent_research_runs (id),
+  agent_name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt_version TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT NOT NULL,
+  latency_ms INTEGER NOT NULL,
+  prompt_tokens INTEGER NOT NULL DEFAULT 0,
+  completion_tokens INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  input_json TEXT NOT NULL,
+  output_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS agent_research_outputs_run_idx
+  ON agent_research_outputs (run_id, agent_name);

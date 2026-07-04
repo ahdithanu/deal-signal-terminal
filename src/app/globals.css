@@ -1347,6 +1347,69 @@ textarea {
   color: rgba(21, 24, 27, 0.72);
 }
 
+.research-panel {
+  background:
+    linear-gradient(135deg, rgba(12, 22, 19, 0.04), transparent 38%),
+    rgba(255, 255, 255, 0.94);
+}
+
+.research-final-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid rgba(18, 24, 30, 0.1);
+  border-radius: 22px;
+  background: rgba(239, 246, 242, 0.74);
+}
+
+.research-final-card h3,
+.research-agent-card h4 {
+  margin: 0;
+}
+
+.research-memo-copy {
+  white-space: pre-line;
+}
+
+.research-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.research-agent-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(18, 24, 30, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.research-agent-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.status-pill-succeeded {
+  background: rgba(217, 237, 226, 0.9);
+  color: #225c42;
+}
+
+.status-pill-failed {
+  background: rgba(245, 218, 213, 0.9);
+  color: #8d2f2f;
+}
+
+.status-pill-skipped {
+  background: rgba(235, 230, 219, 0.9);
+  color: rgba(21, 24, 27, 0.64);
+}
+
 @media print {
   body {
     background: #ffffff;
@@ -1467,6 +1530,7 @@ textarea {
   .metric-grid,
   .decision-grid,
   .graph-entity-grid,
+  .research-agent-grid,
   .timeline-row {
     grid-template-columns: 1fr;
   }

@@ -765,6 +765,90 @@ const tableDefinitions = [
         ON feedback_labels (label, value);
     `,
   },
+  {
+    name: "workspace_deployment_configs",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS workspace_deployment_configs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL UNIQUE,
+        model_provider TEXT NOT NULL,
+        model_name TEXT NOT NULL,
+        model_secret_ref TEXT,
+        embedding_provider TEXT NOT NULL,
+        embedding_model_name TEXT NOT NULL,
+        embedding_secret_ref TEXT,
+        retrieval_depth INTEGER NOT NULL,
+        confidence_threshold REAL NOT NULL,
+        scoring_weights_json TEXT NOT NULL,
+        prompt_template_selection TEXT NOT NULL,
+        notification_rules_json TEXT NOT NULL,
+        rate_limits_json TEXT NOT NULL,
+        feature_flags_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        updated_by_user_id TEXT,
+        FOREIGN KEY (org_id) REFERENCES organizations (id)
+      );
+      CREATE INDEX IF NOT EXISTS workspace_deployment_configs_org_idx
+        ON workspace_deployment_configs (org_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS workspace_deployment_configs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL UNIQUE REFERENCES organizations (id),
+        model_provider TEXT NOT NULL,
+        model_name TEXT NOT NULL,
+        model_secret_ref TEXT,
+        embedding_provider TEXT NOT NULL,
+        embedding_model_name TEXT NOT NULL,
+        embedding_secret_ref TEXT,
+        retrieval_depth INTEGER NOT NULL,
+        confidence_threshold DOUBLE PRECISION NOT NULL,
+        scoring_weights_json TEXT NOT NULL,
+        prompt_template_selection TEXT NOT NULL,
+        notification_rules_json TEXT NOT NULL,
+        rate_limits_json TEXT NOT NULL,
+        feature_flags_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        updated_by_user_id TEXT
+      );
+      CREATE INDEX IF NOT EXISTS workspace_deployment_configs_org_idx
+        ON workspace_deployment_configs (org_id);
+    `,
+  },
+  {
+    name: "workspace_deployment_config_history",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS workspace_deployment_config_history (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        user_id TEXT,
+        changed_at TEXT NOT NULL,
+        section TEXT NOT NULL,
+        old_value_json TEXT NOT NULL,
+        new_value_json TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        FOREIGN KEY (org_id) REFERENCES organizations (id)
+      );
+      CREATE INDEX IF NOT EXISTS workspace_deployment_config_history_org_idx
+        ON workspace_deployment_config_history (org_id, changed_at);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS workspace_deployment_config_history (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL REFERENCES organizations (id),
+        user_id TEXT,
+        changed_at TEXT NOT NULL,
+        section TEXT NOT NULL,
+        old_value_json TEXT NOT NULL,
+        new_value_json TEXT NOT NULL,
+        metadata_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS workspace_deployment_config_history_org_idx
+        ON workspace_deployment_config_history (org_id, changed_at);
+    `,
+  },
 ] as const;
 
 export function buildSchemaSql(provider: DatabaseProvider): string {

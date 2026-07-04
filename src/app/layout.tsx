@@ -55,6 +55,9 @@ export default async function RootLayout({
                             <Link className="nav-link" href="/admin/data-health">
                               Data
                             </Link>
+                            <Link className="nav-link" href="/admin/deployment-settings">
+                              Settings
+                            </Link>
                             <Link className="nav-link" href="/admin/audit">
                               Admin
                             </Link>

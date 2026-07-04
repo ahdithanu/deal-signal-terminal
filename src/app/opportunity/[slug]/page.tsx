@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { NotesPanel } from "@/components/notes-panel";
+import { OpportunityGraphPanel } from "@/components/opportunity-graph-panel";
 import { ScoreBreakdown } from "@/components/score-breakdown";
 import { WatchlistToggle } from "@/components/watchlist-toggle";
 import { buildOpportunitySummary } from "@/lib/ai";
@@ -21,6 +22,7 @@ import {
   formatProjectScale,
   formatSignalType,
 } from "@/lib/formatters";
+import { buildOpportunityGraphContext } from "@/lib/opportunity-graph";
 import { getOpportunityBySlugWithGenerated } from "@/lib/opportunity-service";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +49,7 @@ export default async function OpportunityDetailPage({
   }
 
   const summary = buildOpportunitySummary(opportunity);
+  const graph = await buildOpportunityGraphContext(opportunity);
   const primaryTitle = opportunity.projectName ?? opportunity.title;
   const confidenceRead =
     opportunity.confidenceLevel === "high"
@@ -205,6 +208,8 @@ export default async function OpportunityDetailPage({
               ))}
             </div>
           </div>
+
+          <OpportunityGraphPanel graph={graph} />
 
           <div className="panel">
             <div className="section-header">

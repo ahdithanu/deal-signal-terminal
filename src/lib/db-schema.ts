@@ -271,6 +271,174 @@ const tableDefinitions = [
       );
     `,
   },
+  {
+    name: "graph_entities",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS graph_entities (
+        id TEXT PRIMARY KEY,
+        entity_type TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        normalized_name TEXT NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        properties_json TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS graph_entities_type_name_idx
+        ON graph_entities (entity_type, normalized_name);
+      CREATE INDEX IF NOT EXISTS graph_entities_source_idx
+        ON graph_entities (entity_type, source_system, source_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS graph_entities (
+        id TEXT PRIMARY KEY,
+        entity_type TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        normalized_name TEXT NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        properties_json TEXT NOT NULL,
+        confidence DOUBLE PRECISION NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS graph_entities_type_name_idx
+        ON graph_entities (entity_type, normalized_name);
+      CREATE INDEX IF NOT EXISTS graph_entities_source_idx
+        ON graph_entities (entity_type, source_system, source_id);
+    `,
+  },
+  {
+    name: "graph_entity_aliases",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS graph_entity_aliases (
+        id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL,
+        alias TEXT NOT NULL,
+        normalized_alias TEXT NOT NULL,
+        alias_type TEXT NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        confidence REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL,
+        FOREIGN KEY (entity_id) REFERENCES graph_entities (id)
+      );
+      CREATE INDEX IF NOT EXISTS graph_entity_aliases_lookup_idx
+        ON graph_entity_aliases (normalized_alias, alias_type);
+      CREATE INDEX IF NOT EXISTS graph_entity_aliases_entity_idx
+        ON graph_entity_aliases (entity_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS graph_entity_aliases (
+        id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL REFERENCES graph_entities (id),
+        alias TEXT NOT NULL,
+        normalized_alias TEXT NOT NULL,
+        alias_type TEXT NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        confidence DOUBLE PRECISION NOT NULL,
+        created_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS graph_entity_aliases_lookup_idx
+        ON graph_entity_aliases (normalized_alias, alias_type);
+      CREATE INDEX IF NOT EXISTS graph_entity_aliases_entity_idx
+        ON graph_entity_aliases (entity_id);
+    `,
+  },
+  {
+    name: "graph_relationships",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS graph_relationships (
+        id TEXT PRIMARY KEY,
+        from_entity_id TEXT NOT NULL,
+        to_entity_id TEXT NOT NULL,
+        relationship_type TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        provenance_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL,
+        FOREIGN KEY (from_entity_id) REFERENCES graph_entities (id),
+        FOREIGN KEY (to_entity_id) REFERENCES graph_entities (id)
+      );
+      CREATE INDEX IF NOT EXISTS graph_relationships_from_idx
+        ON graph_relationships (from_entity_id, relationship_type);
+      CREATE INDEX IF NOT EXISTS graph_relationships_to_idx
+        ON graph_relationships (to_entity_id, relationship_type);
+      CREATE INDEX IF NOT EXISTS graph_relationships_source_idx
+        ON graph_relationships (source_system, source_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS graph_relationships (
+        id TEXT PRIMARY KEY,
+        from_entity_id TEXT NOT NULL REFERENCES graph_entities (id),
+        to_entity_id TEXT NOT NULL REFERENCES graph_entities (id),
+        relationship_type TEXT NOT NULL,
+        confidence DOUBLE PRECISION NOT NULL,
+        source_system TEXT,
+        source_id TEXT,
+        provenance_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_verified_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS graph_relationships_from_idx
+        ON graph_relationships (from_entity_id, relationship_type);
+      CREATE INDEX IF NOT EXISTS graph_relationships_to_idx
+        ON graph_relationships (to_entity_id, relationship_type);
+      CREATE INDEX IF NOT EXISTS graph_relationships_source_idx
+        ON graph_relationships (source_system, source_id);
+    `,
+  },
+  {
+    name: "graph_relationship_evidence",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS graph_relationship_evidence (
+        id TEXT PRIMARY KEY,
+        relationship_id TEXT NOT NULL,
+        evidence_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        report_label TEXT NOT NULL,
+        url TEXT,
+        page_url TEXT,
+        record_id TEXT,
+        published_at TEXT,
+        accessed_at TEXT NOT NULL,
+        excerpt TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (relationship_id) REFERENCES graph_relationships (id)
+      );
+      CREATE INDEX IF NOT EXISTS graph_relationship_evidence_relationship_idx
+        ON graph_relationship_evidence (relationship_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS graph_relationship_evidence (
+        id TEXT PRIMARY KEY,
+        relationship_id TEXT NOT NULL REFERENCES graph_relationships (id),
+        evidence_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        report_label TEXT NOT NULL,
+        url TEXT,
+        page_url TEXT,
+        record_id TEXT,
+        published_at TEXT,
+        accessed_at TEXT NOT NULL,
+        excerpt TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS graph_relationship_evidence_relationship_idx
+        ON graph_relationship_evidence (relationship_id);
+    `,
+  },
 ] as const;
 
 export function buildSchemaSql(provider: DatabaseProvider): string {

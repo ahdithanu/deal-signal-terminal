@@ -222,3 +222,110 @@ CREATE TABLE IF NOT EXISTS agent_research_outputs (
 
 CREATE INDEX IF NOT EXISTS agent_research_outputs_run_idx
   ON agent_research_outputs (run_id, agent_name);
+
+CREATE TABLE IF NOT EXISTS review_workflows (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT NOT NULL UNIQUE,
+  opportunity_slug TEXT NOT NULL,
+  state TEXT NOT NULL,
+  original_output_json TEXT,
+  current_edited_output_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_transition_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS review_workflows_slug_idx
+  ON review_workflows (opportunity_slug);
+CREATE INDEX IF NOT EXISTS review_workflows_state_idx
+  ON review_workflows (state);
+
+CREATE TABLE IF NOT EXISTS workflow_events (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  actor_user_id TEXT,
+  actor_org_id TEXT,
+  action TEXT NOT NULL,
+  from_state TEXT,
+  to_state TEXT NOT NULL,
+  comment TEXT,
+  metadata_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS workflow_events_workflow_idx
+  ON workflow_events (workflow_id, created_at);
+
+CREATE TABLE IF NOT EXISTS review_decisions (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  reviewer_user_id TEXT,
+  decision TEXT NOT NULL,
+  from_state TEXT NOT NULL,
+  to_state TEXT NOT NULL,
+  rationale TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS review_decisions_workflow_idx
+  ON review_decisions (workflow_id, created_at);
+
+CREATE TABLE IF NOT EXISTS reviewer_comments (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  reviewer_user_id TEXT,
+  body TEXT NOT NULL,
+  comment_type TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS reviewer_comments_workflow_idx
+  ON reviewer_comments (workflow_id, created_at);
+
+CREATE TABLE IF NOT EXISTS edited_outputs (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  editor_user_id TEXT,
+  original_output_json TEXT NOT NULL,
+  edited_output_json TEXT NOT NULL,
+  edit_summary TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS edited_outputs_workflow_idx
+  ON edited_outputs (workflow_id, created_at);
+
+CREATE TABLE IF NOT EXISTS approval_history (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  approver_user_id TEXT,
+  approved_output_json TEXT NOT NULL,
+  approved_state TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS approval_history_workflow_idx
+  ON approval_history (workflow_id, created_at);
+
+CREATE TABLE IF NOT EXISTS feedback_labels (
+  id TEXT PRIMARY KEY,
+  workflow_id TEXT NOT NULL REFERENCES review_workflows (id),
+  opportunity_id TEXT NOT NULL,
+  reviewer_user_id TEXT,
+  label TEXT NOT NULL,
+  value TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id TEXT,
+  metadata_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS feedback_labels_workflow_idx
+  ON feedback_labels (workflow_id, created_at);
+CREATE INDEX IF NOT EXISTS feedback_labels_label_idx
+  ON feedback_labels (label, value);

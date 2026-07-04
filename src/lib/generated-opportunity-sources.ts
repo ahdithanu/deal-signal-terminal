@@ -35,8 +35,7 @@ function parseRawRecord(rawJson: string | null) {
 }
 
 function projectName(record: StoredPermitRecord) {
-  const raw = parseRawRecord(record.raw_json);
-  const title = typeof raw.PROJECT_TITLE === "string" ? raw.PROJECT_TITLE.trim() : "";
+  const title = sourceProjectTitle(record);
 
   if (title) {
     return title;
@@ -47,6 +46,141 @@ function projectName(record: StoredPermitRecord) {
   }
 
   return `${record.jurisdiction} ${record.permit_type}`;
+}
+
+function sourceProjectTitle(record: StoredPermitRecord) {
+  const raw = parseRawRecord(record.raw_json);
+  const title = typeof raw.PROJECT_TITLE === "string" ? raw.PROJECT_TITLE.trim() : "";
+
+  if (title) {
+    return title;
+  }
+
+  return null;
+}
+
+function normalizeIdentifier(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(?:suite|ste|unit|apt|floor|fl)\b\s*[a-z0-9-]*/g, "")
+    .replace(/\b(street|str)\b/g, "st")
+    .replace(/\b(avenue|av)\b/g, "ave")
+    .replace(/\b(boulevard)\b/g, "blvd")
+    .replace(/\b(road|rd)\b/g, "rd")
+    .replace(/\b(drive|dr)\b/g, "dr")
+    .replace(/\b(lane|ln)\b/g, "ln")
+    .replace(/\b(court|ct)\b/g, "ct")
+    .replace(/\b(place|pl)\b/g, "pl")
+    .replace(/\b(north)\b/g, "n")
+    .replace(/\b(south)\b/g, "s")
+    .replace(/\b(east)\b/g, "e")
+    .replace(/\b(west)\b/g, "w")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function recordIdentityKeys(record: StoredPermitRecord) {
+  const keys: string[] = [];
+  const parcel = record.parcel_number ? normalizeIdentifier(record.parcel_number) : "";
+  const address = record.address ? normalizeIdentifier(record.address) : "";
+  const sourceTitle = sourceProjectTitle(record);
+  const title = sourceTitle ? normalizeIdentifier(sourceTitle) : "";
+  const marketScope = record.market_id;
+  const cityScope = `${marketScope}:${record.city ? normalizeIdentifier(record.city) : "unknown"}`;
+
+  if (parcel && !/^pending/.test(parcel)) {
+    keys.push(`${marketScope}:parcel:${parcel}`);
+  }
+
+  if (address && address.length >= 8) {
+    keys.push(`${cityScope}:address:${address}`);
+  }
+
+  if (
+    title &&
+    (parcel || address) &&
+    title.length >= 12 &&
+    !/^(n\/a|none|unknown|project|permit|tenant improvement|new building|solar permit)$/i.test(
+      title
+    )
+  ) {
+    keys.push(`${cityScope}:project:${title}`);
+  }
+
+  return keys;
+}
+
+type PermitRecordCluster = {
+  id: string;
+  records: StoredPermitRecord[];
+};
+
+function clusterPermitRecords(records: StoredPermitRecord[]): PermitRecordCluster[] {
+  const parent = new Map<string, string>();
+  const recordKeys = new Map<string, string[]>();
+
+  const find = (key: string): string => {
+    const currentParent = parent.get(key) ?? key;
+
+    if (currentParent === key) {
+      parent.set(key, key);
+      return key;
+    }
+
+    const root = find(currentParent);
+    parent.set(key, root);
+    return root;
+  };
+
+  const union = (left: string, right: string) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+
+    if (leftRoot !== rightRoot) {
+      parent.set(rightRoot, leftRoot);
+    }
+  };
+
+  for (const record of records) {
+    const keys = recordIdentityKeys(record);
+    recordKeys.set(record.id, keys);
+
+    for (const key of keys) {
+      parent.set(key, parent.get(key) ?? key);
+    }
+
+    for (const key of keys.slice(1)) {
+      union(keys[0], key);
+    }
+  }
+
+  const clusters = new Map<string, StoredPermitRecord[]>();
+
+  for (const record of records) {
+    const keys = recordKeys.get(record.id) ?? [];
+    const clusterKey = keys.length > 0 ? find(keys[0]) : `record:${record.id}`;
+    const clusterRecords = clusters.get(clusterKey) ?? [];
+    clusterRecords.push(record);
+    clusters.set(clusterKey, clusterRecords);
+  }
+
+  return Array.from(clusters.values()).map((clusterRecords) => {
+    const sortedRecords = [...clusterRecords].sort((left, right) =>
+      signalDate(right).localeCompare(signalDate(left))
+    );
+    const keys = sortedRecords.flatMap(recordIdentityKeys).sort();
+    const preferredKey =
+      keys.find((key) => key.includes(":parcel:")) ??
+      keys.find((key) => key.includes(":address:")) ??
+      keys.find((key) => key.includes(":project:"));
+    const fallbackId = sortedRecords[0]?.permit_number ?? sortedRecords[0]?.id ?? "record";
+
+    return {
+      id: slugify(preferredKey ?? fallbackId),
+      records: sortedRecords,
+    };
+  });
 }
 
 function searchableText(record: StoredPermitRecord) {
@@ -134,6 +268,23 @@ function inferPropertyKind(record: StoredPermitRecord): PropertyKind {
   return "land_repositioning";
 }
 
+function stageRank(stage: DevelopmentStage) {
+  return {
+    early_signal: 1,
+    pre_construction: 2,
+    active_construction: 3,
+    disruption: 4,
+  }[stage];
+}
+
+function scaleRank(scale: ProjectScale) {
+  return {
+    small: 1,
+    medium: 2,
+    large: 3,
+  }[scale];
+}
+
 function buildEvidence(record: StoredPermitRecord): SourceEvidence {
   return {
     id: `generated-source-${record.id}`,
@@ -173,24 +324,50 @@ function buildSignal(record: StoredPermitRecord): PermitSignal {
   };
 }
 
-function buildSeed(record: StoredPermitRecord, signal: PermitSignal): OpportunitySeed {
-  const name = signal.projectName ?? projectName(record);
-  const opportunityType = classifyGeneratedRecord(record);
-  const stage = inferStage(record);
-  const scale = inferScale(record);
-  const date = signalDate(record);
+function buildSeed(cluster: PermitRecordCluster, signals: PermitSignal[]): OpportunitySeed {
+  const primaryRecord = cluster.records.reduce((bestRecord, record) => {
+    const bestScale = scaleRank(inferScale(bestRecord));
+    const recordScale = scaleRank(inferScale(record));
+
+    if (recordScale !== bestScale) {
+      return recordScale > bestScale ? record : bestRecord;
+    }
+
+    return signalDate(record) > signalDate(bestRecord) ? record : bestRecord;
+  }, cluster.records[0]);
+  const primarySignal = signals.find((signal) => signal.permitNumber === primaryRecord.permit_number);
+  const name = primarySignal?.projectName ?? projectName(primaryRecord);
+  const opportunityType = cluster.records.some(
+    (record) => classifyGeneratedRecord(record) === "distress"
+  )
+    ? "distress"
+    : classifyGeneratedRecord(primaryRecord);
+  const stage = cluster.records
+    .map(inferStage)
+    .sort((left, right) => stageRank(right) - stageRank(left))[0];
+  const scale = cluster.records
+    .map(inferScale)
+    .sort((left, right) => scaleRank(right) - scaleRank(left))[0];
+  const dates = cluster.records.map(signalDate).sort();
+  const recordCount = cluster.records.length;
+  const permitLabel = recordCount === 1 ? "permit record" : "permit records";
+  const recordVerb = recordCount === 1 ? "gives" : "give";
+  const permitTypes = Array.from(new Set(cluster.records.map((record) => record.permit_type))).slice(
+    0,
+    3
+  );
 
   return {
-    id: `generated-${record.market_id}-${slugify(record.permit_number)}`,
-    title: `${name} moved in ${record.jurisdiction}`,
+    id: `generated-${primaryRecord.market_id}-${cluster.id}`,
+    title: `${name} activity in ${primaryRecord.jurisdiction}`,
     projectName: name,
-    signalIds: [signal.id],
+    signalIds: signals.map((signal) => signal.id),
     projectScale: scale,
     developmentStage: stage,
-    propertyKind: inferPropertyKind(record),
+    propertyKind: inferPropertyKind(primaryRecord),
     opportunityHint: opportunityType,
-    thesis: `${record.permit_type} activity from ${record.jurisdiction} gives the team a sourced public-record signal to qualify before broader market visibility.`,
-    whyItMatters: `The stored ${record.report_label} record shows ${record.permit_type.toLowerCase()} activity on ${date}, creating a diligence queue item without inventing ownership, value, or sponsor intent.`,
+    thesis: `${recordCount} sourced public ${permitLabel} at the same identified site ${recordVerb} the team a single diligence queue item to qualify before broader market visibility.`,
+    whyItMatters: `The stored ${primaryRecord.report_label} data contains ${recordCount} ${permitLabel} from ${dates[0]} through ${dates[dates.length - 1]}, including ${permitTypes.join(", ").toLowerCase()} activity, without inferring ownership, value, or sponsor intent.`,
     nextStep:
       "Open the source record, confirm parcel ownership and entitlement context, then decide whether this is a direct outreach target, comparable pipeline read, or watchlist item.",
     missingFacts: [
@@ -199,9 +376,9 @@ function buildSeed(record: StoredPermitRecord, signal: PermitSignal): Opportunit
       "Related permits, entitlements, or recorder filings tied to the same site",
     ],
     tags: [
-      record.jurisdiction,
-      record.city ?? "City pending",
-      record.permit_type,
+      primaryRecord.jurisdiction,
+      primaryRecord.city ?? "City pending",
+      ...permitTypes,
       "Generated from stored ingestion",
     ],
   };
@@ -215,7 +392,15 @@ function buildBatch(records: StoredPermitRecord[], marketId: string): Opportunit
   }
 
   const signals = records.map(buildSignal);
-  const seeds = records.map((record, index) => buildSeed(record, signals[index]));
+  const signalsByRecordId = new Map(records.map((record, index) => [record.id, signals[index]]));
+  const seeds = clusterPermitRecords(records).map((cluster) =>
+    buildSeed(
+      cluster,
+      cluster.records
+        .map((record) => signalsByRecordId.get(record.id))
+        .filter((signal): signal is PermitSignal => Boolean(signal))
+    )
+  );
 
   return {
     market,

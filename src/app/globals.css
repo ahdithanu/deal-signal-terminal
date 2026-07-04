@@ -1307,6 +1307,46 @@ textarea {
   background: rgba(255, 255, 255, 0.82);
 }
 
+.graph-panel {
+  background:
+    radial-gradient(circle at top right, rgba(37, 92, 68, 0.12), transparent 34%),
+    rgba(255, 255, 255, 0.92);
+}
+
+.graph-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.graph-entity-card,
+.graph-edge-card {
+  border: 1px solid rgba(18, 24, 30, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 16px;
+}
+
+.graph-entity-card .plain-list {
+  margin-top: 10px;
+}
+
+.graph-edge-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.graph-edge-card {
+  display: grid;
+  gap: 8px;
+}
+
+.graph-evidence-copy {
+  color: rgba(21, 24, 27, 0.72);
+}
+
 @media print {
   body {
     background: #ffffff;
@@ -1426,6 +1466,7 @@ textarea {
   .mini-grid,
   .metric-grid,
   .decision-grid,
+  .graph-entity-grid,
   .timeline-row {
     grid-template-columns: 1fr;
   }

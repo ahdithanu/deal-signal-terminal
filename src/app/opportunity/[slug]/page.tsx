@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { NotesPanel } from "@/components/notes-panel";
 import { OpportunityGraphPanel } from "@/components/opportunity-graph-panel";
 import { OpportunityResearchPanel } from "@/components/opportunity-research-panel";
+import { ReviewWorkflowPanel } from "@/components/review-workflow-panel";
 import { ScoreBreakdown } from "@/components/score-breakdown";
 import { WatchlistToggle } from "@/components/watchlist-toggle";
 import { buildOpportunitySummary } from "@/lib/ai";
@@ -180,6 +181,8 @@ export default async function OpportunityDetailPage({
           </div>
 
           <OpportunityResearchPanel slug={opportunity.slug} />
+
+          <ReviewWorkflowPanel slug={opportunity.slug} opportunityId={opportunity.id} />
 
           <div className="panel">
             <div className="section-header">

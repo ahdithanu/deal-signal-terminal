@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { MemoCopyButton } from "@/components/memo-copy-button";
 import { MemoPrintButton } from "@/components/memo-print-button";
+import { ReviewWorkflowPanel } from "@/components/review-workflow-panel";
 import { generateOpportunityMemo } from "@/lib/ai";
 import { getAuthSession } from "@/lib/auth";
 import { formatConfidenceLevel, formatDate, formatOpportunityType } from "@/lib/formatters";
@@ -32,6 +33,20 @@ export default async function MemoPage({
   }
 
   const memo = await generateOpportunityMemo(opportunity);
+  const reviewableMemo = {
+    kind: "memo" as const,
+    title: opportunity.projectName ?? opportunity.title,
+    body: memo.body,
+    summary: memo.summary,
+    generatedAt: memo.generatedAt,
+    mode: memo.mode,
+    metadata: {
+      opportunityId: opportunity.id,
+      opportunitySlug: opportunity.slug,
+      priorityScore: opportunity.priorityScore,
+      confidenceLevel: opportunity.confidenceLevel,
+    },
+  };
 
   return (
     <div className="page-stack">
@@ -93,6 +108,12 @@ export default async function MemoPage({
             <h2 className="section-title">Decision-ready investment brief</h2>
             <div className="memo-body">{memo.body}</div>
           </div>
+
+          <ReviewWorkflowPanel
+            slug={opportunity.slug}
+            opportunityId={opportunity.id}
+            initialOutput={reviewableMemo}
+          />
         </div>
 
         <div className="stack">

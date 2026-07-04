@@ -1410,6 +1410,49 @@ textarea {
   color: rgba(21, 24, 27, 0.64);
 }
 
+.review-panel {
+  background:
+    radial-gradient(circle at top left, rgba(176, 137, 76, 0.14), transparent 32%),
+    rgba(255, 255, 255, 0.94);
+}
+
+.review-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.review-edit-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(18, 24, 30, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.review-history-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.review-history-row {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(18, 24, 30, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.review-history-row span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 @media print {
   body {
     background: #ffffff;

@@ -1080,6 +1080,45 @@ const tableDefinitions = [
         ON eval_metric (result_id);
     `,
   },
+  {
+    name: "observability_incidents",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS observability_incidents (
+        id TEXT PRIMARY KEY,
+        org_id TEXT,
+        severity TEXT NOT NULL,
+        status TEXT NOT NULL,
+        title TEXT NOT NULL,
+        source TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        resolved_at TEXT,
+        summary TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS observability_incidents_status_idx
+        ON observability_incidents (status, started_at);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS observability_incidents (
+        id TEXT PRIMARY KEY,
+        org_id TEXT,
+        severity TEXT NOT NULL,
+        status TEXT NOT NULL,
+        title TEXT NOT NULL,
+        source TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        resolved_at TEXT,
+        summary TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS observability_incidents_status_idx
+        ON observability_incidents (status, started_at);
+    `,
+  },
 ] as const;
 
 export function buildSchemaSql(provider: DatabaseProvider): string {

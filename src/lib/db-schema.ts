@@ -890,6 +890,196 @@ const tableDefinitions = [
         ON copilot_runs (org_id, created_at);
     `,
   },
+  {
+    name: "eval_dataset",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS eval_dataset (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        workflow TEXT NOT NULL,
+        critical_threshold REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS eval_dataset (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        workflow TEXT NOT NULL,
+        critical_threshold DOUBLE PRECISION NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+  },
+  {
+    name: "eval_case",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS eval_case (
+        id TEXT PRIMARY KEY,
+        dataset_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        input_json TEXT NOT NULL,
+        expected_output_json TEXT NOT NULL,
+        retrieved_context_json TEXT NOT NULL,
+        rubric_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (dataset_id) REFERENCES eval_dataset (id)
+      );
+      CREATE INDEX IF NOT EXISTS eval_case_dataset_idx
+        ON eval_case (dataset_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS eval_case (
+        id TEXT PRIMARY KEY,
+        dataset_id TEXT NOT NULL REFERENCES eval_dataset (id),
+        name TEXT NOT NULL,
+        input_json TEXT NOT NULL,
+        expected_output_json TEXT NOT NULL,
+        retrieved_context_json TEXT NOT NULL,
+        rubric_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS eval_case_dataset_idx
+        ON eval_case (dataset_id);
+    `,
+  },
+  {
+    name: "eval_run",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS eval_run (
+        id TEXT PRIMARY KEY,
+        dataset_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        prompt_version TEXT NOT NULL,
+        model TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        total_cases INTEGER NOT NULL DEFAULT 0,
+        passed_cases INTEGER NOT NULL DEFAULT 0,
+        average_score REAL NOT NULL DEFAULT 0,
+        gate_threshold REAL NOT NULL DEFAULT 0,
+        gate_passed INTEGER NOT NULL DEFAULT 0,
+        total_prompt_tokens INTEGER NOT NULL DEFAULT 0,
+        total_completion_tokens INTEGER NOT NULL DEFAULT 0,
+        total_cost_usd REAL NOT NULL DEFAULT 0,
+        summary_json TEXT NOT NULL,
+        FOREIGN KEY (dataset_id) REFERENCES eval_dataset (id)
+      );
+      CREATE INDEX IF NOT EXISTS eval_run_dataset_idx
+        ON eval_run (dataset_id, started_at);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS eval_run (
+        id TEXT PRIMARY KEY,
+        dataset_id TEXT NOT NULL REFERENCES eval_dataset (id),
+        status TEXT NOT NULL,
+        prompt_version TEXT NOT NULL,
+        model TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        total_cases INTEGER NOT NULL DEFAULT 0,
+        passed_cases INTEGER NOT NULL DEFAULT 0,
+        average_score DOUBLE PRECISION NOT NULL DEFAULT 0,
+        gate_threshold DOUBLE PRECISION NOT NULL DEFAULT 0,
+        gate_passed BOOLEAN NOT NULL DEFAULT FALSE,
+        total_prompt_tokens INTEGER NOT NULL DEFAULT 0,
+        total_completion_tokens INTEGER NOT NULL DEFAULT 0,
+        total_cost_usd DOUBLE PRECISION NOT NULL DEFAULT 0,
+        summary_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS eval_run_dataset_idx
+        ON eval_run (dataset_id, started_at);
+    `,
+  },
+  {
+    name: "eval_result",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS eval_result (
+        id TEXT PRIMARY KEY,
+        run_id TEXT NOT NULL,
+        case_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        score REAL NOT NULL,
+        expected_output_json TEXT NOT NULL,
+        actual_output_json TEXT NOT NULL,
+        retrieved_context_json TEXT NOT NULL,
+        citation_accuracy REAL NOT NULL,
+        hallucination_risk REAL NOT NULL,
+        factual_coverage REAL NOT NULL,
+        latency_ms INTEGER NOT NULL,
+        prompt_tokens INTEGER NOT NULL DEFAULT 0,
+        completion_tokens INTEGER NOT NULL DEFAULT 0,
+        cost_usd REAL NOT NULL DEFAULT 0,
+        assertions_json TEXT NOT NULL,
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (run_id) REFERENCES eval_run (id),
+        FOREIGN KEY (case_id) REFERENCES eval_case (id)
+      );
+      CREATE INDEX IF NOT EXISTS eval_result_run_idx
+        ON eval_result (run_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS eval_result (
+        id TEXT PRIMARY KEY,
+        run_id TEXT NOT NULL REFERENCES eval_run (id),
+        case_id TEXT NOT NULL REFERENCES eval_case (id),
+        status TEXT NOT NULL,
+        score DOUBLE PRECISION NOT NULL,
+        expected_output_json TEXT NOT NULL,
+        actual_output_json TEXT NOT NULL,
+        retrieved_context_json TEXT NOT NULL,
+        citation_accuracy DOUBLE PRECISION NOT NULL,
+        hallucination_risk DOUBLE PRECISION NOT NULL,
+        factual_coverage DOUBLE PRECISION NOT NULL,
+        latency_ms INTEGER NOT NULL,
+        prompt_tokens INTEGER NOT NULL DEFAULT 0,
+        completion_tokens INTEGER NOT NULL DEFAULT 0,
+        cost_usd DOUBLE PRECISION NOT NULL DEFAULT 0,
+        assertions_json TEXT NOT NULL,
+        error_message TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS eval_result_run_idx
+        ON eval_result (run_id);
+    `,
+  },
+  {
+    name: "eval_metric",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS eval_metric (
+        id TEXT PRIMARY KEY,
+        result_id TEXT NOT NULL,
+        metric_name TEXT NOT NULL,
+        metric_value REAL NOT NULL,
+        threshold REAL,
+        passed INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (result_id) REFERENCES eval_result (id)
+      );
+      CREATE INDEX IF NOT EXISTS eval_metric_result_idx
+        ON eval_metric (result_id);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS eval_metric (
+        id TEXT PRIMARY KEY,
+        result_id TEXT NOT NULL REFERENCES eval_result (id),
+        metric_name TEXT NOT NULL,
+        metric_value DOUBLE PRECISION NOT NULL,
+        threshold DOUBLE PRECISION,
+        passed BOOLEAN NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS eval_metric_result_idx
+        ON eval_metric (result_id);
+    `,
+  },
 ] as const;
 
 export function buildSchemaSql(provider: DatabaseProvider): string {

@@ -16,7 +16,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [templates, events] = await Promise.all([listPromptTemplates(), listPromptRegistryEvents()]);
+  const templates = await listPromptTemplates();
+  const events = await listPromptRegistryEvents();
 
   return NextResponse.json({ templates, events });
 }

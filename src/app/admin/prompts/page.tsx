@@ -14,7 +14,8 @@ export default async function AdminPromptsPage() {
     redirect("/");
   }
 
-  const [templates, events] = await Promise.all([listPromptTemplates(), listPromptRegistryEvents()]);
+  const templates = await listPromptTemplates();
+  const events = await listPromptRegistryEvents();
   const activeVersions = templates.filter((template) => template.activeVersion).length;
   const draftVersions = templates.reduce(
     (sum, template) => sum + template.versions.filter((version) => version.status === "draft").length,

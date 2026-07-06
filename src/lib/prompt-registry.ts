@@ -521,8 +521,6 @@ export async function activatePromptVersion({
 }
 
 export async function listPromptRegistryEvents(limit = 50) {
-  await ensureDefaultPromptRegistry();
-
   const rows =
     resolveDatabaseProvider() === "postgres"
       ? (

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { buildOpportunitySummary, generateOpportunityMemo } from "@/lib/ai";
 import { runCopilot } from "@/lib/copilot";
 import { getDatabase, resolveDatabaseProvider } from "@/lib/db";
+import { emitDomainEvent } from "@/lib/domain-events";
 import { getOpenAIConfig } from "@/lib/env";
 import { getOpportunityBySlugWithGenerated } from "@/lib/opportunity-service";
 import { runMultiAgentResearch } from "@/lib/research-agents";
@@ -807,6 +808,21 @@ export async function runEvalDataset(datasetId = "copilot-answers-core"): Promis
     }),
   };
   await updateRun(finishedRow);
+  await emitDomainEvent({
+    eventType: "eval.run.completed",
+    aggregateType: "eval_run",
+    aggregateId: runId,
+    payload: {
+      datasetId: dataset.id,
+      workflow: dataset.workflow,
+      status: finishedRow.status,
+      averageScore,
+      gatePassed: finishedRow.gate_passed,
+      totalCases: dataset.cases.length,
+      passedCases,
+      failedCases: results.filter((result) => result.status !== "passed").map((result) => result.caseId),
+    },
+  });
 
   return runFromRow(finishedRow, results);
 }

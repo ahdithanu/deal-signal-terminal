@@ -81,6 +81,7 @@ async function main() {
     { path: "/opportunity/not-a-real-slug", expectedStatus: 404 },
     { path: "/api/admin/audit", expectedStatus: 200 },
     { path: "/api/admin/data-health", expectedStatus: 200 },
+    { path: "/api/admin/events", expectedStatus: 200 },
     { path: "/api/admin/observability", expectedStatus: 200 },
     { path: "/api/admin/prompts", expectedStatus: 200 },
   ];

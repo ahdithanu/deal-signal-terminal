@@ -1,5 +1,6 @@
 import { ingestElDoradoPermitSignals } from "@/lib/ingest-eldorado";
 import { ingestSanDiegoDevelopmentApprovals } from "@/lib/ingest-sandiego";
+import { emitDomainEvent } from "@/lib/domain-events";
 import { logInfo } from "@/lib/observability";
 
 type IngestionRunner = {
@@ -44,6 +45,18 @@ async function runMarketIngestion(marketId: string) {
     recordsFound: result.recordsFound,
     recordsInserted: result.recordsInserted,
     recordsUpdated: result.recordsUpdated,
+  });
+  await emitDomainEvent({
+    eventType: "ingestion.market.completed",
+    aggregateType: "ingestion_run",
+    aggregateId: result.runId,
+    payload: {
+      marketId: result.marketId,
+      recordsScanned: result.recordsScanned,
+      recordsFound: result.recordsFound,
+      recordsInserted: result.recordsInserted,
+      recordsUpdated: result.recordsUpdated,
+    },
   });
 
   return result;

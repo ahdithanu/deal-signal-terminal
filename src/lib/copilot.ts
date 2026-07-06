@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { buildOpportunitySummary, generateOpportunityMemo } from "@/lib/ai";
 import { getDatabase, resolveDatabaseProvider } from "@/lib/db";
+import { emitDomainEvent } from "@/lib/domain-events";
 import { getOpenAIConfig } from "@/lib/env";
 import { formatOpportunityType } from "@/lib/formatters";
 import { buildOpportunityGraphContext } from "@/lib/opportunity-graph";
@@ -432,6 +433,20 @@ export async function runCopilot(
       response,
       latencyMs: Date.now() - startedAt,
     });
+    await emitDomainEvent({
+      eventType: "copilot.run.completed",
+      aggregateType: "copilot_response",
+      aggregateId: response.id,
+      orgId: actor.orgId,
+      userId: actor.userId,
+      payload: {
+        intent,
+        refused: response.refused,
+        citationCount: response.citations.length,
+        confidence: response.confidence,
+        latencyMs: Date.now() - startedAt,
+      },
+    });
 
     return response;
   } catch (error) {
@@ -449,6 +464,18 @@ export async function runCopilot(
       response,
       latencyMs: Date.now() - startedAt,
       errorMessage: error instanceof Error ? error.message : "Unknown Copilot error",
+    });
+    await emitDomainEvent({
+      eventType: "copilot.run.failed",
+      aggregateType: "copilot_response",
+      aggregateId: response.id,
+      orgId: actor.orgId,
+      userId: actor.userId,
+      payload: {
+        intent,
+        errorMessage: error instanceof Error ? error.message : "Unknown Copilot error",
+        latencyMs: Date.now() - startedAt,
+      },
     });
     return response;
   }

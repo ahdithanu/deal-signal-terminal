@@ -488,3 +488,39 @@ CREATE TABLE IF NOT EXISTS observability_incidents (
 
 CREATE INDEX IF NOT EXISTS observability_incidents_status_idx
   ON observability_incidents (status, started_at);
+
+CREATE TABLE IF NOT EXISTS domain_event_outbox (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  aggregate_type TEXT NOT NULL,
+  aggregate_id TEXT NOT NULL,
+  org_id TEXT,
+  user_id TEXT,
+  payload_json TEXT NOT NULL,
+  status TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  available_at TEXT NOT NULL,
+  published_at TEXT,
+  error_message TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS domain_event_outbox_status_idx
+  ON domain_event_outbox (status, available_at);
+
+CREATE INDEX IF NOT EXISTS domain_event_outbox_aggregate_idx
+  ON domain_event_outbox (aggregate_type, aggregate_id, created_at);
+
+CREATE TABLE IF NOT EXISTS domain_event_subscriptions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_ref TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS domain_event_subscriptions_event_idx
+  ON domain_event_subscriptions (event_type, status);

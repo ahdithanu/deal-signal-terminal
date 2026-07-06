@@ -488,3 +488,47 @@ CREATE TABLE IF NOT EXISTS observability_incidents (
 
 CREATE INDEX IF NOT EXISTS observability_incidents_status_idx
   ON observability_incidents (status, started_at);
+
+CREATE TABLE IF NOT EXISTS prompt_templates (
+  id TEXT PRIMARY KEY,
+  prompt_key TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  workflow TEXT NOT NULL,
+  status TEXT NOT NULL,
+  active_version_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS prompt_versions (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES prompt_templates (id),
+  version TEXT NOT NULL,
+  status TEXT NOT NULL,
+  prompt_body TEXT NOT NULL,
+  variables_json TEXT NOT NULL,
+  output_schema_json TEXT NOT NULL,
+  model_family TEXT NOT NULL,
+  changelog TEXT NOT NULL,
+  created_by_user_id TEXT,
+  created_at TEXT NOT NULL,
+  activated_at TEXT,
+  UNIQUE (template_id, version)
+);
+
+CREATE INDEX IF NOT EXISTS prompt_versions_template_idx
+  ON prompt_versions (template_id, created_at);
+
+CREATE TABLE IF NOT EXISTS prompt_registry_events (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES prompt_templates (id),
+  version_id TEXT REFERENCES prompt_versions (id),
+  user_id TEXT,
+  action TEXT NOT NULL,
+  occurred_at TEXT NOT NULL,
+  metadata_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS prompt_registry_events_template_idx
+  ON prompt_registry_events (template_id, occurred_at);

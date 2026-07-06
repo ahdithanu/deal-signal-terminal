@@ -82,6 +82,7 @@ async function main() {
     { path: "/api/admin/audit", expectedStatus: 200 },
     { path: "/api/admin/data-health", expectedStatus: 200 },
     { path: "/api/admin/observability", expectedStatus: 200 },
+    { path: "/api/admin/prompts", expectedStatus: 200 },
   ];
 
   for (const route of authenticatedRoutes) {

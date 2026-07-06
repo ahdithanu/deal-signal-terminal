@@ -61,6 +61,9 @@ export default async function RootLayout({
                             <Link className="nav-link" href="/admin/evals">
                               Evals
                             </Link>
+                            <Link className="nav-link" href="/admin/prompts">
+                              Prompts
+                            </Link>
                             <Link className="nav-link" href="/admin/observability">
                               Observability
                             </Link>

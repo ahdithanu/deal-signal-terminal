@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { getDatabase, resolveDatabaseProvider } from "@/lib/db";
+import { emitDomainEvent } from "@/lib/domain-events";
 import { queryPostgres } from "@/lib/postgres";
 import type {
   ApprovalHistoryRecord,
@@ -387,6 +388,21 @@ async function transition(input: {
     toState: nextState,
     comment: input.comment,
     metadata: input.metadata,
+  });
+  await emitDomainEvent({
+    eventType: "review.workflow.transitioned",
+    aggregateType: "review_workflow",
+    aggregateId: input.workflow.id,
+    orgId: input.actor.orgId,
+    userId: input.actor.userId,
+    payload: {
+      opportunityId: input.workflow.opportunityId,
+      opportunitySlug: input.workflow.opportunitySlug,
+      action: input.action,
+      fromState: input.workflow.state,
+      toState: nextState,
+      editedOutputId: input.editedOutputId ?? null,
+    },
   });
 
   return getWorkflowHistory(input.workflow.opportunityId);

@@ -64,6 +64,9 @@ export default async function RootLayout({
                             <Link className="nav-link" href="/admin/observability">
                               Observability
                             </Link>
+                            <Link className="nav-link" href="/admin/events">
+                              Events
+                            </Link>
                             <Link className="nav-link" href="/admin/audit">
                               Admin
                             </Link>

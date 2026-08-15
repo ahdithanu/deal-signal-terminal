@@ -49,6 +49,8 @@ Copy `.env.example` to `.env.local` if you want live OpenAI memo generation.
 - `BUILD_SIGNALS_DB_PATH`: optional override for the SQLite file path
 - `CRON_SECRET`: bearer token Vercel sends to scheduled ingestion endpoints; required for
   cron route execution
+- `INGESTION_BRIDGE_SECRET`: dedicated bearer token used by the nationwide ingestion service to
+  deliver canonical development records to `/api/internal/ingestion/import`
 
 ## Postgres migration foundation
 
@@ -72,6 +74,8 @@ Build Signals now has the storage layer needed for real permit ingestion:
 - admin users can run the El Dorado normalized-source load or the San Diego development approvals
   load from `/admin/data-health`
 - Vercel Cron runs the all-market ingest daily via `/api/cron/ingest/all`
+- the versioned nationwide bridge accepts evidence-backed pre-approval and approved records from
+  the separate source-normalization service; see `docs/nationwide-ingestion-bridge.md`
 
 The current El Dorado ingest loads the normalized permit signals already represented in the
 application into the durable ingestion tables. The San Diego ingest fetches the official City of

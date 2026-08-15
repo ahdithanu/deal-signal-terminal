@@ -11,6 +11,7 @@ function isPublicPath(pathname: string): boolean {
     PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/api/internal/ingestion") ||
     pathname === "/api/health"
   );
 }

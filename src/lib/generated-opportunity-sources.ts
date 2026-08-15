@@ -3,6 +3,7 @@ import type { OpportunitySourceBatch } from "@/data/opportunity-sources";
 import { listRecentPermitRecords, type StoredPermitRecord } from "@/lib/ingestion-store";
 import type {
   DevelopmentStage,
+  MarketDefinition,
   OpportunitySeed,
   OpportunityType,
   PermitSignal,
@@ -50,7 +51,12 @@ function projectName(record: StoredPermitRecord) {
 
 function sourceProjectTitle(record: StoredPermitRecord) {
   const raw = parseRawRecord(record.raw_json);
-  const title = typeof raw.PROJECT_TITLE === "string" ? raw.PROJECT_TITLE.trim() : "";
+  const title =
+    typeof raw.projectName === "string"
+      ? raw.projectName.trim()
+      : typeof raw.PROJECT_TITLE === "string"
+        ? raw.PROJECT_TITLE.trim()
+        : "";
 
   if (title) {
     return title;
@@ -210,7 +216,17 @@ function classifyGeneratedRecord(record: StoredPermitRecord): OpportunityType {
 }
 
 function inferStage(record: StoredPermitRecord): DevelopmentStage {
+  const raw = parseRawRecord(record.raw_json);
+  const approvalStage = typeof raw.approvalStage === "string" ? raw.approvalStage : "";
   const searchable = searchableText(record);
+
+  if (approvalStage === "pre_approval") {
+    return "early_signal";
+  }
+
+  if (approvalStage === "approved") {
+    return record.issued_date ? "active_construction" : "pre_construction";
+  }
 
   if (/fire|storm|damage|disaster/.test(searchable)) {
     return "disruption";
@@ -286,25 +302,72 @@ function scaleRank(scale: ProjectScale) {
 }
 
 function buildEvidence(record: StoredPermitRecord): SourceEvidence {
+  const raw = parseRawRecord(record.raw_json);
+  const evidence =
+    raw.evidence && typeof raw.evidence === "object" && !Array.isArray(raw.evidence)
+      ? (raw.evidence as Record<string, unknown>)
+      : {};
+  const publicRecordId =
+    typeof raw.permitNumber === "string" && raw.permitNumber.trim()
+      ? raw.permitNumber.trim()
+      : typeof raw.applicationNumber === "string" && raw.applicationNumber.trim()
+        ? raw.applicationNumber.trim()
+        : typeof raw.externalRecordId === "string"
+          ? raw.externalRecordId
+          : record.permit_number;
+
   return {
     id: `generated-source-${record.id}`,
-    label: `${record.source_name} ${record.permit_number}`,
+    label: `${record.source_name} ${publicRecordId}`,
     reportLabel: record.report_label,
-    pageUrl: record.source_url,
-    url: record.document_url,
-    recordId: record.permit_number,
-    publishedAt: record.published_at?.slice(0, 10) ?? record.accessed_at.slice(0, 10),
-    accessedAt: record.accessed_at.slice(0, 10),
-    excerpt: record.description.slice(0, 220),
+    pageUrl:
+      typeof evidence.pageUrl === "string" ? evidence.pageUrl : record.source_url,
+    url: typeof evidence.recordUrl === "string" ? evidence.recordUrl : record.document_url,
+    recordId: publicRecordId,
+    publishedAt:
+      typeof evidence.publishedAt === "string"
+        ? evidence.publishedAt.slice(0, 10)
+        : record.published_at?.slice(0, 10) ?? record.accessed_at.slice(0, 10),
+    accessedAt:
+      typeof evidence.accessedAt === "string"
+        ? evidence.accessedAt.slice(0, 10)
+        : record.accessed_at.slice(0, 10),
+    excerpt:
+      typeof evidence.excerpt === "string"
+        ? evidence.excerpt.slice(0, 220)
+        : record.description.slice(0, 220),
   };
 }
 
 function buildSignal(record: StoredPermitRecord): PermitSignal {
   const date = signalDate(record);
+  const raw = parseRawRecord(record.raw_json);
+  const parties =
+    raw.parties && typeof raw.parties === "object" && !Array.isArray(raw.parties)
+      ? (raw.parties as Record<string, unknown>)
+      : {};
+  const dates =
+    raw.dates && typeof raw.dates === "object" && !Array.isArray(raw.dates)
+      ? (raw.dates as Record<string, unknown>)
+      : {};
+  const publicPermitNumber =
+    typeof raw.permitNumber === "string" && raw.permitNumber.trim()
+      ? raw.permitNumber.trim()
+      : typeof raw.applicationNumber === "string" && raw.applicationNumber.trim()
+        ? raw.applicationNumber.trim()
+        : typeof raw.externalRecordId === "string"
+          ? raw.externalRecordId
+          : record.permit_number;
+  const partyName = (key: string) =>
+    typeof parties[key] === "string" && parties[key].trim() ? parties[key].trim() : null;
+  const approvalStage =
+    typeof raw.approvalStage === "string"
+      ? (raw.approvalStage as PermitSignal["approvalStage"])
+      : undefined;
 
   return {
     id: `generated-signal-${record.id}`,
-    permitNumber: record.permit_number,
+    permitNumber: publicPermitNumber,
     marketId: record.market_id,
     jurisdiction: record.jurisdiction,
     permitType: record.permit_type,
@@ -312,10 +375,17 @@ function buildSignal(record: StoredPermitRecord): PermitSignal {
     description: record.description,
     status: record.status ?? "Stored",
     appliedDate: record.applied_date ?? date,
-    approvedDate: null,
+    approvedDate:
+      typeof dates.approvedAt === "string" ? dates.approvedAt.slice(0, 10) : null,
     issuedDate: record.issued_date,
     finalizedDate: record.finaled_date,
-    contractorName: record.contractor ?? record.applicant,
+    approvalStage,
+    applicantName: partyName("applicant") ?? record.applicant,
+    ownerName: partyName("owner"),
+    developerName: partyName("developer"),
+    contractorName: partyName("contractor") ?? record.contractor,
+    architectName: partyName("architect"),
+    engineerName: partyName("engineer"),
     projectName: projectName(record),
     siteAddress: record.address ?? "Address pending",
     siteApn: record.parcel_number ?? `pending-${record.id}`,
@@ -335,7 +405,9 @@ function buildSeed(cluster: PermitRecordCluster, signals: PermitSignal[]): Oppor
 
     return signalDate(record) > signalDate(bestRecord) ? record : bestRecord;
   }, cluster.records[0]);
-  const primarySignal = signals.find((signal) => signal.permitNumber === primaryRecord.permit_number);
+  const primarySignal = signals.find(
+    (signal) => signal.id === `generated-signal-${primaryRecord.id}`
+  );
   const name = primarySignal?.projectName ?? projectName(primaryRecord);
   const opportunityType = cluster.records.some(
     (record) => classifyGeneratedRecord(record) === "distress"
@@ -385,11 +457,47 @@ function buildSeed(cluster: PermitRecordCluster, signals: PermitSignal[]): Oppor
 }
 
 function buildBatch(records: StoredPermitRecord[], marketId: string): OpportunitySourceBatch | null {
-  const market = markets[marketId];
-
-  if (!market) {
-    return null;
-  }
+  const existingMarket = markets[marketId as keyof typeof markets];
+  const latestRecord = [...records].sort((left, right) =>
+    signalDate(right).localeCompare(signalDate(left))
+  )[0];
+  const dates = records.map(signalDate).sort();
+  const cities = Array.from(
+    new Set(records.map((record) => record.city?.trim().toUpperCase()).filter(Boolean))
+  ) as string[];
+  const market =
+    existingMarket ??
+    ({
+      id: marketId,
+      name: latestRecord?.jurisdiction ?? marketId,
+      geography:
+        cities.length > 0
+          ? `${cities.join(", ")} and the surrounding jurisdiction.`
+          : latestRecord?.jurisdiction ?? marketId,
+      analysisDate: dates.at(-1) ?? new Date().toISOString().slice(0, 10),
+      sourceWindow: {
+        start: dates[0] ?? new Date().toISOString().slice(0, 10),
+        end: dates.at(-1) ?? new Date().toISOString().slice(0, 10),
+      },
+      recordsScanned: records.length,
+      sourcePageUrl: latestRecord?.source_url ?? "",
+      sourceDocumentUrl: latestRecord?.document_url ?? latestRecord?.source_url ?? "",
+      reportLabel: latestRecord?.report_label ?? `${marketId} imported development records`,
+      cityScores: Object.fromEntries(
+        cities.map((city) => [
+          city,
+          {
+            score: 10,
+            tier: "established" as const,
+            rationale: "Imported market awaiting locally calibrated corridor scoring.",
+          },
+        ])
+      ),
+      permitTypeFrequencies: records.reduce<Record<string, number>>((counts, record) => {
+        counts[record.permit_type] = (counts[record.permit_type] ?? 0) + 1;
+        return counts;
+      }, {}),
+    } satisfies MarketDefinition);
 
   const signals = records.map(buildSignal);
   const signalsByRecordId = new Map(records.map((record, index) => [record.id, signals[index]]));

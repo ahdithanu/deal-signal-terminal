@@ -43,4 +43,57 @@ describe("opportunity graph context", () => {
       true
     );
   });
+
+  it("projects imported permit parties into evidence-backed relationships", async () => {
+    const { buildOpportunityGraphContext } = await import("@/lib/opportunity-graph");
+    const seeded = opportunities[0];
+
+    if (!seeded?.signals[0]) {
+      throw new Error("Expected a seeded opportunity signal.");
+    }
+
+    const opportunity = structuredClone(seeded);
+    opportunity.signals = [
+      {
+        ...opportunity.signals[0],
+        id: "imported-mesa-record-1001",
+        approvalStage: "pre_approval",
+        applicantName: "Permit Services LLC",
+        developerName: "Retail Growth Partners LLC",
+        ownerName: "Main Street Owner LLC",
+        contractorName: "Desert Build Co",
+        architectName: "Studio Retail Architects",
+        engineerName: "Southwest Civil Engineering",
+      },
+    ];
+
+    const graph = await buildOpportunityGraphContext(opportunity);
+    const entityTypes = new Set(graph.entities.map((entity) => entity.entityType));
+    const relationshipTypes = new Set(
+      graph.relationships.map((relationship) => relationship.relationshipType)
+    );
+
+    for (const entityType of [
+      "developer",
+      "owner",
+      "general_contractor",
+      "architect",
+      "engineer",
+    ]) {
+      expect(entityTypes.has(entityType as never)).toBe(true);
+    }
+    for (const relationshipType of [
+      "applicant_for",
+      "owns",
+      "contractor_on",
+      "architect_on",
+      "engineer_on",
+    ]) {
+      expect(relationshipTypes.has(relationshipType as never)).toBe(true);
+    }
+    expect(graph.relationships.every((relationship) => relationship.lastVerifiedAt)).toBe(true);
+    expect(graph.relationships.every((relationship) => relationship.evidence.length > 0)).toBe(
+      true
+    );
+  });
 });

@@ -34,6 +34,12 @@ describe("middleware", () => {
     expect(response.status).toBe(200);
   });
 
+  it("allows nationwide imports through middleware so route-level bearer auth can run", () => {
+    const response = middleware(makeRequest("/api/internal/ingestion/import"));
+
+    expect(response.status).toBe(200);
+  });
+
   it("returns a 401 JSON response for protected API requests without a session", async () => {
     const response = middleware(makeRequest("/api/admin/audit"));
 

@@ -74,7 +74,13 @@ export type PermitSignal = {
   approvedDate?: string | null;
   issuedDate?: string | null;
   finalizedDate?: string | null;
+  approvalStage?: "pre_approval" | "approved" | "denied" | "withdrawn" | "unknown";
+  applicantName?: string | null;
+  ownerName?: string | null;
+  developerName?: string | null;
   contractorName?: string | null;
+  architectName?: string | null;
+  engineerName?: string | null;
   projectName?: string | null;
   siteAddress: string;
   siteApn: string;

@@ -141,7 +141,7 @@ async function upsertPermitEntity(signal: PermitSignal) {
     entityType: "permit",
     displayName: `${signal.permitNumber} ${signal.permitType}`,
     sourceSystem: "permit",
-    sourceId: `${signal.marketId}:${signal.permitNumber}`,
+    sourceId: `${signal.marketId}:${signal.id}`,
     aliases: compactAliases([
       { alias: signal.permitNumber, aliasType: "permit_number", confidence: 0.99 },
       { alias: signal.projectName, aliasType: "name", confidence: 0.75 },
@@ -152,6 +152,7 @@ async function upsertPermitEntity(signal: PermitSignal) {
       permitType: signal.permitType,
       permitSubtype: signal.permitSubtype,
       status: signal.status,
+      approvalStage: signal.approvalStage,
       issuedDate: signal.issuedDate,
       appliedDate: signal.appliedDate,
     },
@@ -205,6 +206,33 @@ async function upsertContractorEntity(signal: PermitSignal) {
   });
 }
 
+type PermitParty = {
+  name: string | null | undefined;
+  entityType: "developer" | "owner" | "architect" | "engineer";
+};
+
+async function upsertPermitPartyEntity(signal: PermitSignal, party: PermitParty) {
+  const name = party.name?.trim();
+
+  if (!name) {
+    return null;
+  }
+
+  return upsertGraphEntity({
+    entityType: party.entityType,
+    displayName: name,
+    sourceSystem: "permit-party",
+    sourceId: `${signal.marketId}:${party.entityType}:${name}`,
+    aliases: compactAliases([{ alias: name, aliasType: "name", confidence: 0.86 }]),
+    properties: {
+      marketId: signal.marketId,
+      firstSeenPermit: signal.permitNumber,
+    },
+    confidence: 0.78,
+    lastVerifiedAt: signal.source.accessedAt,
+  });
+}
+
 function collectRelationship(
   relationships: GraphRelationship[],
   relationship: GraphRelationship
@@ -234,8 +262,34 @@ export async function buildOpportunityGraphContext(
     const parcelEntity = await upsertParcelEntity(opportunity, signal);
     const cityEntity = await upsertCityEntity(signal);
     const contractorEntity = await upsertContractorEntity(signal);
+    const developerEntity = await upsertPermitPartyEntity(signal, {
+      name: signal.developerName ?? signal.applicantName,
+      entityType: "developer",
+    });
+    const permitOwnerEntity = await upsertPermitPartyEntity(signal, {
+      name: signal.ownerName,
+      entityType: "owner",
+    });
+    const architectEntity = await upsertPermitPartyEntity(signal, {
+      name: signal.architectName,
+      entityType: "architect",
+    });
+    const engineerEntity = await upsertPermitPartyEntity(signal, {
+      name: signal.engineerName,
+      entityType: "engineer",
+    });
 
-    for (const entity of [permitEntity, propertyEntity, parcelEntity, cityEntity, contractorEntity]) {
+    for (const entity of [
+      permitEntity,
+      propertyEntity,
+      parcelEntity,
+      cityEntity,
+      contractorEntity,
+      developerEntity,
+      permitOwnerEntity,
+      architectEntity,
+      engineerEntity,
+    ]) {
       if (entity) {
         entities.set(entity.id, entity);
       }
@@ -332,6 +386,46 @@ export async function buildOpportunityGraphContext(
           sourceId: `${signal.id}:contractor`,
           confidence: 0.74,
           provenance: { signalId: signal.id, contractorName: signal.contractorName },
+          lastVerifiedAt: signal.source.accessedAt,
+          evidence: relationshipEvidence(signal),
+        })
+      );
+    }
+
+    for (const party of [
+      { entity: developerEntity, relationshipType: "applicant_for" as const, role: "developer" },
+      { entity: architectEntity, relationshipType: "architect_on" as const, role: "architect" },
+      { entity: engineerEntity, relationshipType: "engineer_on" as const, role: "engineer" },
+    ]) {
+      if (!party.entity) continue;
+
+      collectRelationship(
+        relationships,
+        await upsertGraphRelationship({
+          fromEntityId: party.entity.id,
+          toEntityId: permitEntity.id,
+          relationshipType: party.relationshipType,
+          sourceSystem: "permit-party",
+          sourceId: `${signal.id}:${party.role}`,
+          confidence: 0.76,
+          provenance: { signalId: signal.id, role: party.role },
+          lastVerifiedAt: signal.source.accessedAt,
+          evidence: relationshipEvidence(signal),
+        })
+      );
+    }
+
+    if (permitOwnerEntity) {
+      collectRelationship(
+        relationships,
+        await upsertGraphRelationship({
+          fromEntityId: permitOwnerEntity.id,
+          toEntityId: parcelEntity?.id ?? propertyEntity.id,
+          relationshipType: "owns",
+          sourceSystem: "permit-party",
+          sourceId: `${signal.id}:owner`,
+          confidence: 0.72,
+          provenance: { signalId: signal.id, role: "owner" },
           lastVerifiedAt: signal.source.accessedAt,
           evidence: relationshipEvidence(signal),
         })

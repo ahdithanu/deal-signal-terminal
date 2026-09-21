@@ -4,7 +4,7 @@ const TEST_DB_PATH = `${process.cwd()}/.data/test-audit.db`;
 
 describe("audit persistence", () => {
   beforeEach(async () => {
-    process.env.DST_DB_PATH = TEST_DB_PATH;
+    process.env.BUILD_SIGNALS_DB_PATH = TEST_DB_PATH;
     const auth = await import("@/lib/auth");
     auth.__testing.resetStorage();
   });
@@ -12,7 +12,7 @@ describe("audit persistence", () => {
   afterEach(async () => {
     const auth = await import("@/lib/auth");
     auth.__testing.resetStorage();
-    delete process.env.DST_DB_PATH;
+    delete process.env.BUILD_SIGNALS_DB_PATH;
   });
 
   it("records and returns recent audit events in descending order", async () => {

@@ -84,10 +84,10 @@ export function NotesPanel({ opportunityId }: { opportunityId: string }) {
       setSavedAt(detail.note?.savedAt ?? null);
     }
 
-    window.addEventListener("deal-signal-terminal:note-sync", handleNoteSync);
+    window.addEventListener("build-signals:note-sync", handleNoteSync);
 
     return () => {
-      window.removeEventListener("deal-signal-terminal:note-sync", handleNoteSync);
+      window.removeEventListener("build-signals:note-sync", handleNoteSync);
     };
   }, [opportunityId]);
 
@@ -120,7 +120,7 @@ export function NotesPanel({ opportunityId }: { opportunityId: string }) {
         setSavedAt(nextRecord?.savedAt ?? null);
 
         window.dispatchEvent(
-          new CustomEvent("deal-signal-terminal:note-sync", {
+          new CustomEvent("build-signals:note-sync", {
             detail: {
               opportunityId,
               note: nextRecord,

@@ -58,6 +58,21 @@ function writeLog(level: LogLevel, message: string, context?: Record<string, unk
   }
 }
 
+export function redactEmail(value: string | undefined | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim().toLowerCase();
+  const [localPart, domain] = trimmed.split("@");
+
+  if (!localPart || !domain) {
+    return "[redacted-email]";
+  }
+
+  return `${localPart.slice(0, 1)}***@${domain}`;
+}
+
 export function logInfo(message: string, context?: Record<string, unknown>) {
   writeLog("info", message, context);
 }

@@ -1,7 +1,12 @@
 const baseUrl = process.env.SMOKE_BASE_URL?.trim() || "http://localhost:3000";
-const smokeEmail = process.env.SMOKE_EMAIL?.trim() || process.env.DST_BOOTSTRAP_EMAIL?.trim() || "admin@dealsignal.local";
+const smokeEmail =
+  process.env.SMOKE_EMAIL?.trim() ||
+  process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||
+  "admin@buildsignals.local";
 const smokePassword =
-  process.env.SMOKE_PASSWORD?.trim() || process.env.DST_BOOTSTRAP_PASSWORD?.trim() || "change-me-now";
+  process.env.SMOKE_PASSWORD?.trim() ||
+  process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD?.trim() ||
+  "change-me-now";
 const demoSlug = process.env.SMOKE_OPPORTUNITY_SLUG?.trim() || "air-park-self-storage-fire";
 
 function normalizeExpectedStatus(expectedStatus) {

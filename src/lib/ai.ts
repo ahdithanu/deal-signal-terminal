@@ -182,6 +182,156 @@ function buildMemoPrompt(opportunity: Opportunity): string {
   ].join("\n");
 }
 
+function serializeOpportunityForInsights(opportunity: Opportunity): string {
+  const city = opportunity.signals[0]?.siteCity ?? "Unknown city";
+
+  return JSON.stringify({
+    projectName: opportunity.projectName ?? opportunity.title,
+    title: opportunity.title,
+    city,
+    location: opportunity.locationLabel,
+    opportunityType: formatOpportunityType(opportunity.opportunityType),
+    developmentStage: formatDevelopmentStage(opportunity.developmentStage),
+    priorityScore: opportunity.priorityScore,
+    confidence: formatConfidenceLevel(opportunity.confidenceLevel),
+    timelineEvents: opportunity.timeline.length,
+    latestSignalDate: opportunity.metadata.latestSignalDate,
+    whyItMatters: opportunity.whyItMatters,
+    nextStep: opportunity.nextStep,
+    tags: opportunity.tags,
+  });
+}
+
+function buildInsightsPrompt(question: string, opportunities: Opportunity[]): string {
+  return [
+    "Answer the user's question about the visible real estate opportunities using only the facts provided.",
+    "Do not invent facts, projects, values, or owners.",
+    "If the answer is uncertain or the data is incomplete, say so plainly.",
+    "Keep the answer concise, practical, and specific to the currently visible set.",
+    "",
+    `Question: ${question}`,
+    `Visible opportunities: ${opportunities.length}`,
+    "Opportunity set:",
+    ...opportunities.map(serializeOpportunityForInsights),
+  ].join("\n");
+}
+
+function buildFallbackInsightsAnswer(question: string, opportunities: Opportunity[]): string {
+  if (!opportunities.length) {
+    return "There are no visible opportunities in the current set, so widen the filters before asking a question.";
+  }
+
+  const lowerQuestion = question.toLowerCase();
+
+  if (lowerQuestion.includes("new") || lowerQuestion.includes("recent") || lowerQuestion.includes("latest")) {
+    const newest = [...opportunities]
+      .sort(
+        (left, right) =>
+          new Date(right.metadata.latestSignalDate).getTime() -
+          new Date(left.metadata.latestSignalDate).getTime()
+      )
+      .slice(0, 3);
+
+    return `${newest
+      .map(
+        (opportunity) =>
+          `${opportunity.projectName ?? opportunity.title} (${opportunity.metadata.latestSignalDate})`
+      )
+      .join(", ")} are the newest visible signals right now.`;
+  }
+
+  if (lowerQuestion.includes("early") || lowerQuestion.includes("pre-construction")) {
+    const early = opportunities.filter(
+      (opportunity) =>
+        opportunity.developmentStage === "early_signal" ||
+        opportunity.developmentStage === "pre_construction"
+    );
+
+    if (!early.length) {
+      return "None of the currently visible opportunities read as early-stage or pre-construction.";
+    }
+
+    return `${early
+      .slice(0, 4)
+      .map((opportunity) => opportunity.projectName ?? opportunity.title)
+      .join(", ")} are the clearest early-stage opportunities in the current visible set.`;
+  }
+
+  if (
+    lowerQuestion.includes("institutional") ||
+    lowerQuestion.includes("best") ||
+    lowerQuestion.includes("strongest")
+  ) {
+    const ranked = [...opportunities]
+      .filter((opportunity) => opportunity.projectScale !== "small")
+      .sort((left, right) => right.priorityScore - left.priorityScore)
+      .slice(0, 3);
+
+    return `${ranked
+      .map(
+        (opportunity) =>
+          `${opportunity.projectName ?? opportunity.title} (${opportunity.priorityScore}, ${formatOpportunityType(opportunity.opportunityType)})`
+      )
+      .join(", ")} look strongest in the current set because they combine scale, cleaner sponsor-style context, and the highest ranked scores.`;
+  }
+
+  const top = [...opportunities].sort((left, right) => right.priorityScore - left.priorityScore).slice(0, 3);
+
+  return `The highest-priority visible opportunities are ${top
+    .map(
+      (opportunity) =>
+        `${opportunity.projectName ?? opportunity.title} (${opportunity.priorityScore}, ${formatOpportunityType(opportunity.opportunityType)})`
+    )
+    .join(", ")}. If you want a sharper answer, ask about newest signals, early-stage projects, strongest opportunities, or what changed most.`;
+}
+
+export async function answerOpportunitySetQuestion(
+  question: string,
+  opportunities: Opportunity[]
+): Promise<string> {
+  const trimmedQuestion = question.trim();
+
+  if (!trimmedQuestion) {
+    return "Ask a specific question about the visible opportunities to generate an answer.";
+  }
+
+  if (!opportunities.length) {
+    return "There are no visible opportunities in the current set, so widen the filters before asking a question.";
+  }
+
+  const openAI = getOpenAIConfig();
+
+  if (openAI.apiKey) {
+    try {
+      const client = new OpenAI({ apiKey: openAI.apiKey });
+      const response = await client.responses.create({
+        model: openAI.model,
+        input: [
+          {
+            role: "system",
+            content:
+              "You answer real estate acquisitions questions about a visible set of ranked permit-driven opportunities. You stay concise and never fabricate missing facts.",
+          },
+          {
+            role: "user",
+            content: buildInsightsPrompt(trimmedQuestion, opportunities),
+          },
+        ],
+      });
+
+      const answer = response.output_text?.trim();
+
+      if (answer) {
+        return answer;
+      }
+    } catch (error) {
+      logError("OpenAI opportunity-set insights failed; falling back to deterministic answer.", error);
+    }
+  }
+
+  return buildFallbackInsightsAnswer(trimmedQuestion, opportunities);
+}
+
 export async function generateOpportunityMemo(
   opportunity: Opportunity
 ): Promise<OpportunityMemo> {

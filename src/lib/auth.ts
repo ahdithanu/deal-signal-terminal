@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-shared";
 import { closeDatabase, getDatabase, resetDatabaseForTests } from "@/lib/db";
@@ -46,18 +46,25 @@ export type DemoWorkspaceCredentials = {
   orgName: string;
 };
 
+const DEMO_SESSION_TOKEN = "build-signals-demo-session";
+
 function getBootstrapConfig() {
-  const isProduction = process.env.NODE_ENV === "production";
   const email =
+    process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||
     process.env.DST_BOOTSTRAP_EMAIL?.trim() ||
-    (!isProduction ? "admin@dealsignal.local" : "");
+    "admin@buildsignals.local";
   const password =
+    process.env.BUILD_SIGNALS_BOOTSTRAP_PASSWORD?.trim() ||
     process.env.DST_BOOTSTRAP_PASSWORD?.trim() ||
-    (!isProduction ? "change-me-now" : "");
+    "change-me-now";
   const orgName =
-    process.env.DST_BOOTSTRAP_ORG_NAME?.trim() || "Deal Signal Capital";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_NAME?.trim() ||
+    process.env.DST_BOOTSTRAP_ORG_NAME?.trim() ||
+    "Build Signals";
   const orgSlug =
-    process.env.DST_BOOTSTRAP_ORG_SLUG?.trim() || "deal-signal-capital";
+    process.env.BUILD_SIGNALS_BOOTSTRAP_ORG_SLUG?.trim() ||
+    process.env.DST_BOOTSTRAP_ORG_SLUG?.trim() ||
+    "build-signals";
 
   return {
     email,
@@ -68,7 +75,11 @@ function getBootstrapConfig() {
 }
 
 function shouldExposeDemoCredentials() {
-  return process.env.DST_EXPOSE_DEMO_CREDENTIALS === "true" || process.env.NODE_ENV !== "production";
+  return (
+    process.env.BUILD_SIGNALS_EXPOSE_DEMO_CREDENTIALS === "true" ||
+    process.env.DST_EXPOSE_DEMO_CREDENTIALS === "true" ||
+    process.env.NODE_ENV !== "production"
+  );
 }
 
 export function getDemoWorkspaceCredentials(): DemoWorkspaceCredentials | null {
@@ -87,6 +98,30 @@ export function getDemoWorkspaceCredentials(): DemoWorkspaceCredentials | null {
 
 function hashPassword(password: string, salt: string): string {
   return scryptSync(password, salt, 64).toString("hex");
+}
+
+function stableId(prefix: string, value: string): string {
+  return `${prefix}-${createHash("sha256").update(value).digest("hex").slice(0, 24)}`;
+}
+
+function buildDemoSession(): AuthSession | null {
+  const bootstrap = getBootstrapConfig();
+
+  if (!bootstrap.email || !bootstrap.password) {
+    return null;
+  }
+
+  return {
+    token: DEMO_SESSION_TOKEN,
+    userId: stableId("user", bootstrap.email.toLowerCase()),
+    orgId: stableId("org", bootstrap.orgSlug),
+    orgName: bootstrap.orgName,
+    orgSlug: bootstrap.orgSlug,
+    email: bootstrap.email.toLowerCase(),
+    name: "Platform Admin",
+    role: "admin",
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+  };
 }
 
 function verifyPassword(password: string, salt: string, expectedHash: string): boolean {
@@ -248,9 +283,17 @@ export async function loginWithPassword(email: string, password: string): Promis
   );
 }
 
+export async function loginWithDemoWorkspace(): Promise<AuthSession | null> {
+  return buildDemoSession();
+}
+
 export async function getAuthSessionByToken(token: string | undefined): Promise<AuthSession | null> {
   if (!token) {
     return null;
+  }
+
+  if (token === DEMO_SESSION_TOKEN) {
+    return buildDemoSession();
   }
 
   await ensureBootstrapUser();
@@ -295,7 +338,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
 }
 
 export async function clearAuthSession(token: string | undefined) {
-  if (!token) {
+  if (!token || token === DEMO_SESSION_TOKEN) {
     return;
   }
 

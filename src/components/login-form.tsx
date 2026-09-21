@@ -18,6 +18,33 @@ export function LoginForm({ demoCredentials }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  async function readErrorMessage(response: Response): Promise<string | null> {
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+
+    try {
+      if (contentType.includes("application/json")) {
+        const payload = (await response.json()) as { error?: unknown };
+        return typeof payload.error === "string" ? payload.error : null;
+      }
+
+      const text = await response.text();
+      const trimmed = text.trim();
+
+      if (!trimmed) {
+        return null;
+      }
+
+      // Collapse HTML or framework error bodies into a user-facing fallback.
+      if (trimmed.startsWith("<!DOCTYPE html") || trimmed.startsWith("<html")) {
+        return null;
+      }
+
+      return trimmed;
+    } catch {
+      return null;
+    }
+  }
+
   async function submitLogin(nextEmail: string, nextPassword: string, redirectToDemo = false) {
     setIsSubmitting(true);
     setError(null);
@@ -31,10 +58,9 @@ export function LoginForm({ demoCredentials }: LoginFormProps) {
         body: JSON.stringify({ email: nextEmail, password: nextPassword }),
       });
 
-      const payload = (await response.json()) as { error?: string };
-
       if (!response.ok) {
-        throw new Error(payload.error ?? "Login failed.");
+        const responseError = await readErrorMessage(response);
+        throw new Error(responseError ?? "Login failed. Check the server logs or deployment env settings.");
       }
 
       router.push(redirectToDemo ? "/?demo=1" : "/");

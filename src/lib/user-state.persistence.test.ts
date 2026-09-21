@@ -4,7 +4,7 @@ const TEST_DB_PATH = `${process.cwd()}/.data/test-user-state.db`;
 
 describe("user state persistence", () => {
   beforeEach(async () => {
-    process.env.DST_DB_PATH = TEST_DB_PATH;
+    process.env.BUILD_SIGNALS_DB_PATH = TEST_DB_PATH;
     const userState = await import("@/lib/user-state");
     userState.__testing.resetStorage();
   });
@@ -12,7 +12,7 @@ describe("user state persistence", () => {
   afterEach(async () => {
     const userState = await import("@/lib/user-state");
     userState.__testing.resetStorage();
-    delete process.env.DST_DB_PATH;
+    delete process.env.BUILD_SIGNALS_DB_PATH;
   });
 
   it("persists watchlist and notes in sqlite-backed user state", async () => {

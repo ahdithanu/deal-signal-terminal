@@ -2,8 +2,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-shared";
+import { applySecurityHeaders } from "@/lib/security";
 
-const PUBLIC_PATHS = new Set(["/login", "/demo"]);
+const PUBLIC_PATHS = new Set(["/login", "/demo", "/pilot", "/privacy"]);
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/auth") || pathname === "/api/health";
@@ -32,15 +33,17 @@ export function middleware(request: NextRequest) {
   const hasSessionCookie = Boolean(request.cookies.get(AUTH_SESSION_COOKIE)?.value);
 
   if (!hasSessionCookie && isProtectedApi(pathname)) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return applySecurityHeaders(
+      NextResponse.json({ error: "Authentication required." }, { status: 401 })
+    );
   }
 
   if (!hasSessionCookie && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    return applySecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
-  return NextResponse.next();
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {

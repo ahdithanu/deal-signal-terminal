@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { LogoutButton } from "@/components/logout-button";
 import { Providers } from "@/components/providers";
-import { getAuthSession } from "@/lib/auth";
+import { getAuthSession, isDemoSession } from "@/lib/auth";
 
 import "./globals.css";
 
@@ -70,6 +70,11 @@ export default async function RootLayout({
                             <Link className="nav-link" href="/admin/events">
                               Events
                             </Link>
+                            {!isDemoSession(session) ? (
+                              <Link className="nav-link" href="/admin/public-api">
+                                API
+                              </Link>
+                            ) : null}
                             <Link className="nav-link" href="/admin/audit">
                               Admin
                             </Link>

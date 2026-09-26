@@ -76,6 +76,10 @@ export type DemoWorkspaceCredentials = {
 
 const DEMO_SESSION_TOKEN = "build-signals-demo-session";
 
+export function isDemoSession(session: AuthSession): boolean {
+  return session.token === DEMO_SESSION_TOKEN;
+}
+
 function getBootstrapConfig() {
   const email =
     process.env.BUILD_SIGNALS_BOOTSTRAP_EMAIL?.trim() ||

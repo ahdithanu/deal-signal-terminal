@@ -1297,6 +1297,96 @@ const tableDefinitions = [
         ON domain_event_subscriptions (event_type, status);
     `,
   },
+  {
+    name: "public_api_keys",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS public_api_keys (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        key_prefix TEXT NOT NULL,
+        key_last4 TEXT NOT NULL,
+        secret_hash TEXT NOT NULL UNIQUE,
+        scopes_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        rate_limit_per_minute INTEGER NOT NULL,
+        expires_at TEXT,
+        last_used_at TEXT,
+        created_by_user_id TEXT,
+        created_at TEXT NOT NULL,
+        revoked_at TEXT,
+        FOREIGN KEY (org_id) REFERENCES organizations (id),
+        FOREIGN KEY (created_by_user_id) REFERENCES users (id)
+      );
+      CREATE INDEX IF NOT EXISTS public_api_keys_org_idx
+        ON public_api_keys (org_id, status, created_at);
+      CREATE INDEX IF NOT EXISTS public_api_keys_hash_idx
+        ON public_api_keys (secret_hash);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS public_api_keys (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL REFERENCES organizations (id),
+        name TEXT NOT NULL,
+        key_prefix TEXT NOT NULL,
+        key_last4 TEXT NOT NULL,
+        secret_hash TEXT NOT NULL UNIQUE,
+        scopes_json TEXT NOT NULL,
+        status TEXT NOT NULL,
+        rate_limit_per_minute INTEGER NOT NULL,
+        expires_at TEXT,
+        last_used_at TEXT,
+        created_by_user_id TEXT REFERENCES users (id),
+        created_at TEXT NOT NULL,
+        revoked_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS public_api_keys_org_idx
+        ON public_api_keys (org_id, status, created_at);
+      CREATE INDEX IF NOT EXISTS public_api_keys_hash_idx
+        ON public_api_keys (secret_hash);
+    `,
+  },
+  {
+    name: "public_api_request_logs",
+    sqlite: `
+      CREATE TABLE IF NOT EXISTS public_api_request_logs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT,
+        api_key_id TEXT,
+        route TEXT NOT NULL,
+        method TEXT NOT NULL,
+        status_code INTEGER NOT NULL,
+        latency_ms REAL NOT NULL,
+        request_id TEXT NOT NULL,
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (org_id) REFERENCES organizations (id),
+        FOREIGN KEY (api_key_id) REFERENCES public_api_keys (id)
+      );
+      CREATE INDEX IF NOT EXISTS public_api_request_logs_org_idx
+        ON public_api_request_logs (org_id, created_at);
+      CREATE INDEX IF NOT EXISTS public_api_request_logs_key_idx
+        ON public_api_request_logs (api_key_id, created_at);
+    `,
+    postgres: `
+      CREATE TABLE IF NOT EXISTS public_api_request_logs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT REFERENCES organizations (id),
+        api_key_id TEXT REFERENCES public_api_keys (id),
+        route TEXT NOT NULL,
+        method TEXT NOT NULL,
+        status_code INTEGER NOT NULL,
+        latency_ms DOUBLE PRECISION NOT NULL,
+        request_id TEXT NOT NULL,
+        error_message TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS public_api_request_logs_org_idx
+        ON public_api_request_logs (org_id, created_at);
+      CREATE INDEX IF NOT EXISTS public_api_request_logs_key_idx
+        ON public_api_request_logs (api_key_id, created_at);
+    `,
+  },
 ] as const;
 
 export function buildSchemaSql(provider: DatabaseProvider): string {

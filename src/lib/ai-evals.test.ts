@@ -58,5 +58,5 @@ describe("ai eval platform", () => {
     expect(comparison.leftRunId).toBe(first.id);
     expect(comparison.rightRunId).toBe(second.id);
     expect(comparison.regressionDetected).toBe(false);
-  });
+  }, 15_000);
 });

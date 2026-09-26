@@ -61,6 +61,7 @@ async function main() {
   const unauthenticatedRoutes = [
     { path: "/login", expectedStatus: 200 },
     { path: "/api/health", expectedStatus: 200 },
+    { path: "/api/v1/opportunities", expectedStatus: 401 },
     { path: "/", expectedStatus: [302, 307] },
   ];
   const results = [];
@@ -84,6 +85,8 @@ async function main() {
     { path: "/api/admin/events", expectedStatus: 200 },
     { path: "/api/admin/observability", expectedStatus: 200 },
     { path: "/api/admin/prompts", expectedStatus: 200 },
+    { path: "/api/admin/public-api", expectedStatus: 200 },
+    { path: "/admin/public-api", expectedStatus: 200 },
   ];
 
   for (const route of authenticatedRoutes) {

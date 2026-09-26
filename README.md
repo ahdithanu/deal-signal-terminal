@@ -89,6 +89,12 @@ for manual operator runs without a browser session.
 
 ## Operational checks
 
+Workspace admins can create scoped integration keys, revoke access, and review usage at
+`/admin/public-api`. The versioned public API serves the shared opportunity catalog and its
+source-backed graph at `/api/v1/opportunities`. Demo sessions cannot manage API credentials.
+See [Public API platform](docs/public-api-platform.md) for authentication, filters, rate limits,
+database setup, and the scaling plan.
+
 - `GET /api/health` returns a lightweight health payload for uptime monitoring.
 - `GET /api/health` also reports the configured database provider so environment drift is easier to spot.
 - Server routes now emit structured JSON logs for auth and persistence activity.

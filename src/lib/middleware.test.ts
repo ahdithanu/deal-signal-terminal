@@ -34,6 +34,12 @@ describe("middleware", () => {
     expect(response.status).toBe(200);
   });
 
+  it("lets versioned APIs enforce key authentication without a browser redirect", () => {
+    expect(middleware(makeRequest("/api/v1/opportunities")).status).toBe(200);
+    expect(middleware(makeRequest("/api/v10/opportunities")).status).toBe(307);
+    expect(middleware(makeRequest("/admin/public-api")).status).toBe(307);
+  });
+
   it("returns a 401 JSON response for protected API requests without a session", async () => {
     const response = middleware(makeRequest("/api/admin/audit"));
 
